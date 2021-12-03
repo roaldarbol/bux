@@ -1,0 +1,6 @@
+site_name: Bux
+site_url: https://example.com/
+
+theme:
+  name: material
+
