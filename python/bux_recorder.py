@@ -1,6 +1,7 @@
 #!/usr/bin/python3.7
 
 # Software
+import argparse
 import os
 import time
 import datetime as dt
@@ -24,6 +25,8 @@ temp_sensor = BME280(i2c_dev=bus)
 lux_sensor = bh1745.BH1745()
 lux_sensor.setup()
 lux_sensor.set_leds(0)
+
+parser = argparse.ArgumentParser(prog='bux')
 
 class BuxRecorder:
     def __init__(self):
