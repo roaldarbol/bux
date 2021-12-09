@@ -20,3 +20,5 @@ class serial_connection():
         return(s)
     
     # def connect():
+
+    # def read_serial():
