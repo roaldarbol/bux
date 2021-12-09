@@ -1,4 +1,4 @@
-from bux.gui import bux
+import bux.gui
 
 if __name__ == '__main__':
-    app = bux()
+    app = bux.gui.bux_recorder()
