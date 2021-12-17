@@ -5,16 +5,11 @@ import tkinter as tk
 from bux.experiment import task
 # import bux.test
 import bux.utils
-from bux.serial_connection import serial_connection
+import bux.serial_connection as serial_connection
 
 raspberry_pi = bux.utils.is_raspberrypi()
 if raspberry_pi == False:
     print("You're not on a Raspberry Pi")
-
-# This needs to go elsewhere
-ser = serial_connection.device("usb")
-if ser == None:
-    print("Serial connection not established.")
  
 # Functions
 class bux_recorder():
@@ -72,6 +67,8 @@ class bux_recorder():
     def toggle(self):
         """Toggles Start/Stop state"""
         if self.running == False: # otherwise it starts
+            self.ser = serial_connection.serial_connection("usb")
+            self.ser.connect_device()
             self.start_button.config(text = "Stop", bg="red")
             self.running = True
             self.experimental_loop()
@@ -79,15 +76,20 @@ class bux_recorder():
         elif self.running == True: # if the experiment is running, it stops
             # bux.experiment.close()
             self.start_button.config(text="Start", bg="green")
+            self.ser.close()
+            print("Serial disconnected")
             self.running = False
     
     def experimental_loop(self):
         """Initiates the experimental loop"""
         print('Experiment running!')
         # bux.test.open_stream()
+        # Create txt or csv file here
         while self.running:
-            task()
-            # read_serial()
+            # time.sleep(0.1)
+            if self.ser.read_serial():
+                print(self.ser.read_serial())
+                # Append txt file here
             self.root.update() # Needed to process new events
 
     def get_dir(self):
