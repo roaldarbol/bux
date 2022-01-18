@@ -3,7 +3,7 @@ import time
 import csv
 
 # Find serial port on Mac with "ls -1 /dev/cu.usbmodem*" in Terminal
-port = "/dev/cu.usbmodem141401" # Serial port of Pico (for me)
+port = "dev/tty.usbmodem142201" # Serial port of Pico (for me)
 baud = 9600 # Pico runs at 9600 baud (I think)
 fileName="pico-data.csv" # Name of the CSV file generated
 ser = serial.Serial(port, baud, timeout=1)
