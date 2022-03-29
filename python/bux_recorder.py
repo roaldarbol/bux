@@ -72,7 +72,6 @@ class BuxRecorder:
         self.running = False
         self.temp_wait = 3
         self.start_dt = dt.datetime.now().strftime('%Y-%m-%d_%H.%M.%S')
-        self.start_time = time.time()
         self.data = pd.DataFrame(columns=['time','temperature','humidity','lux'])
         
         # Start GUI
@@ -106,6 +105,7 @@ class BuxRecorder:
             self.camera.start_recording(self.filename)
         try:
             print('Experiment running!')
+            self.start_time = time.time()
             self.get_data()
             self.last = time.time()
             while self.running:

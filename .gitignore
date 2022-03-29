@@ -1,7 +1,6 @@
 .DS_Store
 *.csv
-src/__pycache__
-src/bux/__pycache__
+bux/__pycache__
 bux.egg-info
 dist/
 data/
