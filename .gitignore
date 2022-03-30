@@ -1,2 +1,7 @@
 .DS_Store
 *.csv
+bux/__pycache__
+bux.egg-info
+dist/
+data/
+python/
