@@ -1,9 +1,10 @@
 [tool.poetry]
-name = "bux"
+name = "bux-recorder"
 version = "0.1.0"
 description = ""
 authors = ["Mikkel Roald-Arbøl <github.ggb9a@simplelogin.co>"]
 license = "MIT"
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -11,8 +12,17 @@ pyserial = "^3.5"
 opencv-python = "^4.5.5"
 PyYAML = "^6.0"
 toml = "^0.10.2"
+mpremote = "^0.2.0"
+serial-mailman = "*"
+
+[[tool.poetry.source]]
+name = "testpypisimple"
+url = "https://test.pypi.org/simple/"
+secondary = true
 
 [tool.poetry.dev-dependencies]
+jupyter = "^1.0.0"
+ipykernel = "^6.10.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -1,4 +1,5 @@
 import os
+import platform
 import time
 import csv
 import serial
@@ -11,9 +12,33 @@ from serial.tools import list_ports
 def is_raspberrypi():
     try:
         with io.open('/sys/firmware/devicetree/base/model', 'r') as m:
-            if 'raspberry pi' in m.read().lower(): return True
-    except Exception: pass
+            if 'raspberry pi' in m.read().lower(): 
+                return(m)
+    except Exception: 
+        pass
     return False
+
+def get_platform():
+    return platform.system()
+
+def get_gui_coordinates(root, w, h):
+    # get screen width and height
+    ws = root.winfo_screenwidth() # width of the screen
+    hs = root.winfo_screenheight() # height of the screen
+
+    # calculate x and y coordinates for the Tk root window
+    x = (ws/2) - (w/2)
+    y = (hs/2) - (h/2)
+    return(w,h,x,y)
+
+def handle_focus_in(button):
+    full_name_entry.delete(0, tk.END)
+    full_name_entry.config(fg='black')
+
+def handle_focus_out(button):
+    full_name_entry.delete(0, tk.END)
+    full_name_entry.config(fg='grey')
+    full_name_entry.insert(0, "Example: Joe Bloggs")
 
 def list_ports():
     """
