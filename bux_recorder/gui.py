@@ -28,6 +28,7 @@ class bux_recorder():
     def __init__(self):
         self.t_dir_choose = ["Select directory", "Directory chosen"]
         self.t_dir_choose_current = self.t_dir_choose[0]
+        self.t_update = "\u27F3"
         self.t_cam_choose = "Choose camera"
         self.t_cam_open = "Open camera"
         self.t_cam_close = "Close camera"
@@ -47,37 +48,33 @@ class bux_recorder():
 
         self.running = False
         self.preview_running = False
-        [self.available_cams, self.working_cams, self.non_working_cams] = utils.list_ports()
-        self.working_serial = []
-        for port in list(list_ports.comports()):
-            self.working_serial.append(port.device)
-        self.working_serial_original = self.working_serial.copy()
-        self.working_serial.insert(0, self.t_serial_choose)
-        self.working_cams_original = self.working_cams.copy()
-        self.working_cams.insert(0, self.t_cam_choose)
+        self.working_cams = [self.t_cam_choose]
         self.cam_opened = False
+        self.working_serial = [self.t_serial_choose]
         self.serial_opened = False
         self.path = ""
         self.path_short = ""
         self.settings_path = "/Users/roaldarbol/MEGA/Documents/sussex/projects/bux-recorder/video_settings.toml"
         self.settings_path_short = ""
         self.app = self.GUI()
+        self.update_lists()
 
     def GUI(self):
         """ Create the main UI window"""
         self.root = tk.Tk()
         self.root.title('Bux Recorder')
-        self.w, self.h = 450, 500
+        self.w, self.h = 500, 500
         self.gui_coordinates = utils.get_gui_coordinates(self.root, self.w, self.h)
         self.pad = 10
-        self.col_width = (self.w / 2)
+        self.col_width = (self.w / 2) - 20
 
         self.root.geometry('%dx%d+%d+%d' % self.gui_coordinates)
         self.root.resizable(0, 0)
         # self.root.bind("<space>", self.toggle) # Removed space access to Start Experiment
         self.root.protocol("WM_DELETE_WINDOW", self.close)
         self.root.columnconfigure(0, minsize=self.col_width)
-        self.root.columnconfigure(1, minsize=self.col_width)
+        self.root.columnconfigure(1, minsize=20)
+        self.root.columnconfigure(2, minsize=self.col_width)
 
         """Create GUI Elements"""
         # === TOP PANEL === #
@@ -87,13 +84,18 @@ class bux_recorder():
             font=("Avenir", 44)
             # height=70
         )
+        self.button_update = tk.Button(self.root, 
+            text=self.t_update, 
+            width=1,
+            command = self.update_lists
+            )
 
         # === LEFT PANEL === #
         self.dropdown_camera = ttk.Combobox(self.root,
             state="readonly",
             justify=tk.CENTER,
             width=16,
-            values = self.working_cams)
+            values=self.working_cams)
         self.dropdown_camera.current(0)
         self.button_open_camera = tk.Button(self.root, 
             text=self.t_cam_open,
@@ -118,7 +120,7 @@ class bux_recorder():
             state="readonly",
             justify=tk.CENTER,
             width=16,
-            values = self.working_serial)
+            values=self.working_serial)
         self.dropdown_serial.current(0)
         self.button_open_serial = tk.Button(self.root, 
             text=self.t_serial_open,
@@ -181,22 +183,24 @@ class bux_recorder():
             widgets.grid_configure(padx=5, pady=(5,5))
         
         # Then customise placement
-        self.label_title.grid(row=0, column=0, columnspan=2, padx=(50,50), pady=(30,30))
-        self.dropdown_camera.grid_configure(row=1, column=0, pady=(7,0))
-        self.button_open_camera.grid(row=2, column=0)
-        self.button_settingsname.grid(row=3, column=0)
-        self.button_loadsettings.grid(row=4, column=0)
-        self.button_preview.grid(row=5, column=0)
+        self.label_title.grid(row=0, column=0, columnspan=3, padx=(50,50), pady=(30,30))
+        self.button_update.grid(row=1, column=1)
+
+        self.dropdown_camera.grid_configure(row=1, column=0, pady=(7,0), sticky="e")
+        self.button_open_camera.grid(row=2, column=0, sticky="e")
+        self.button_settingsname.grid(row=3, column=0, sticky="e")
+        self.button_loadsettings.grid(row=4, column=0, sticky="e")
+        self.button_preview.grid(row=5, column=0, sticky="e")
         
-        self.dropdown_serial.grid(row=1, column=1, pady=(7,0))
-        self.button_open_serial.grid(row=2, column=1) 
-        self.dropdown_scripts.grid(row=3, column=1)
-        self.text_command.grid(row=4, column=1)
-        self.button_send_serial.grid(row=5, column=1)
+        self.dropdown_serial.grid(row=1, column=2, pady=(7,0), sticky="w")
+        self.button_open_serial.grid(row=2, column=2, sticky="w") 
+        self.dropdown_scripts.grid(row=3, column=2, sticky="w")
+        self.text_command.grid(row=4, column=2, sticky="w")
+        self.button_send_serial.grid(row=5, column=2, sticky="w")
         # self.dropdown_functions.grid(row=6, column=6)
 
-        self.button_dirname.grid_configure(row=6, column=0, pady=(50,0), columnspan = 2)
-        self.button_start.grid(row=7, column=0, columnspan = 2)
+        self.button_dirname.grid_configure(row=6, column=0, pady=(50,0), columnspan = 3)
+        self.button_start.grid(row=7, column=0, columnspan = 3)
         self.sysinfo.grid(row=10, column=0, sticky="sw", padx=25, pady=25)
         
         
@@ -249,8 +253,20 @@ class bux_recorder():
             return
         else:
             button.configure(text=message)
-        
-    
+
+    def update_lists(self):
+        self.working_cams = []
+        self.working_serial = []
+        [self.available_cams, self.working_cams, self.non_working_cams] = utils.list_ports()
+        for port in list(list_ports.comports()):
+            self.working_serial.append(port.device)
+        self.working_serial_original = self.working_serial.copy()
+        self.working_serial.insert(0, self.t_serial_choose)
+        self.working_cams_original = self.working_cams.copy()
+        self.working_cams.insert(0, self.t_cam_choose)
+        self.dropdown_camera.config(values=self.working_cams)
+        self.dropdown_serial.config(values=self.working_serial)
+
     def toggle_serial(self, serial):
         if not self.serial_opened:
             if serial not in self.working_serial_original:
