@@ -38,7 +38,7 @@ class bux_recorder():
         self.t_serial_send = "Send to serial"
         self.t_script_choose = "Choose script"
         self.t_settings_choose = ["Select settings", "Settings selected"]
-        self.t_settings_choose_current = self.t_settings_choose[0]
+        self.t_settings_choose_current = [self.t_settings_choose[0], self.t_settings_choose[0]]
         self.t_settings_load = "Load settings"
         self.t_preview = "Preview"
         self.t_preview_stop = "Stop preview"
@@ -47,22 +47,20 @@ class bux_recorder():
         self.t_quit = "Do you want to quit Bux?"
 
         self.running = False
-        self.preview_running = False
-        self.working_cams = [self.t_cam_choose]
-        self.cam_opened = False
+        self.cam_opened = {}
         self.working_serial = [self.t_serial_choose]
         self.serial_opened = False
         self.path = ""
         self.path_short = ""
-        self.settings_path = "/Users/roaldarbol/MEGA/Documents/sussex/projects/bux-recorder/video_settings.toml"
-        self.settings_path_short = ""
         self.app = self.GUI()
-        self.update_lists()
+        self.update_serial()
+
 
     def GUI(self):
         """ Create the main UI window"""
         self.root = tk.Tk()
         self.root.title('Bux Recorder')
+        # To get button height and width in pixels: https://stackoverflow.com/a/46286221/13240268
         self.w, self.h = 500, 500
         self.gui_coordinates = utils.get_gui_coordinates(self.root, self.w, self.h)
         self.pad = 10
@@ -87,33 +85,12 @@ class bux_recorder():
         self.button_update = tk.Button(self.root, 
             text=self.t_update, 
             width=1,
-            command = self.update_lists
+            command = self.update_serial
             )
-
-        # === LEFT PANEL === #
-        self.dropdown_camera = ttk.Combobox(self.root,
-            state="readonly",
-            justify=tk.CENTER,
-            width=16,
-            values=self.working_cams)
-        self.dropdown_camera.current(0)
-        self.button_open_camera = tk.Button(self.root, 
-            text=self.t_cam_open,
+        self.button_window_camera = tk.Button(self.root, 
+            text = "Open new window", 
             width=15,
-            command = lambda: self.toggle_camera(self.dropdown_camera.get())) 
-        self.button_settingsname = tk.Button(self.root, 
-            text=self.t_settings_choose[0], 
-            width=15,
-            command = self.get_file)
-        self.button_loadsettings = tk.Button(self.root, 
-            text=self.t_settings_load, 
-            width=15,
-            command = self.load_settings)
-        self.button_preview = tk.Button(self.root, 
-            text=self.t_preview,
-            width=15,
-            command = self.preview_toggle)
-
+            command = self.create_window_camera)
 
         # === RIGHT PANEL === #
         self.dropdown_serial = ttk.Combobox(self.root,
@@ -157,16 +134,6 @@ class bux_recorder():
             font=('TkDefaultFont', 8)
         )
 
-        """Disable camera buttons"""
-        self.widgets_cam_enable = [
-            self.button_preview,
-            self.button_start
-        ]
-        self.widgets_cam_disable = [
-            self.button_loadsettings,
-            self.button_preview,
-            self.button_start
-        ]
 
         self.widgets_serial = [
             self.text_command,
@@ -174,7 +141,7 @@ class bux_recorder():
             self.button_send_serial
         ]
 
-        for widget in self.widgets_cam_disable + self.widgets_serial:
+        for widget in self.widgets_serial:
                 widget.configure(state='disable')
 
         """Position elements into grid"""
@@ -183,24 +150,19 @@ class bux_recorder():
             widgets.grid_configure(padx=5, pady=(5,5))
         
         # Then customise placement
-        self.label_title.grid(row=0, column=0, columnspan=3, padx=(50,50), pady=(30,30))
-        self.button_update.grid(row=1, column=1)
-
-        self.dropdown_camera.grid_configure(row=1, column=0, pady=(7,0), sticky="e")
-        self.button_open_camera.grid(row=2, column=0, sticky="e")
-        self.button_settingsname.grid(row=3, column=0, sticky="e")
-        self.button_loadsettings.grid(row=4, column=0, sticky="e")
-        self.button_preview.grid(row=5, column=0, sticky="e")
+        self.label_title.grid(row=0, column=0, columnspan=2, padx=(50,50), pady=(30,30))
+        self.button_update.grid(row=1, column=0)
+        self.button_window_camera.grid(row=2, column=0)
         
-        self.dropdown_serial.grid(row=1, column=2, pady=(7,0), sticky="w")
-        self.button_open_serial.grid(row=2, column=2, sticky="w") 
-        self.dropdown_scripts.grid(row=3, column=2, sticky="w")
-        self.text_command.grid(row=4, column=2, sticky="w")
-        self.button_send_serial.grid(row=5, column=2, sticky="w")
+        self.dropdown_serial.grid(row=1, column=1, pady=(7,0), sticky="w")
+        self.button_open_serial.grid(row=2, column=1, sticky="w") 
+        self.dropdown_scripts.grid(row=3, column=1, sticky="w")
+        self.text_command.grid(row=4, column=1, sticky="w")
+        self.button_send_serial.grid(row=5, column=1, sticky="w")
         # self.dropdown_functions.grid(row=6, column=6)
 
-        self.button_dirname.grid_configure(row=6, column=0, pady=(50,0), columnspan = 3)
-        self.button_start.grid(row=7, column=0, columnspan = 3)
+        self.button_dirname.grid_configure(row=6, column=0, pady=(50,0), columnspan = 2)
+        self.button_start.grid(row=7, column=0, columnspan = 2)
         self.sysinfo.grid(row=10, column=0, sticky="sw", padx=25, pady=25)
         
         
@@ -226,27 +188,184 @@ class bux_recorder():
                 )
             )
         )
-        self.button_settingsname.bind(
-            "<Enter>", 
-            lambda function: (
-                self.hover(
-                    button=self.button_settingsname, 
-                    enter=True, 
-                    message=self.settings_path_short
-                )
-            )
-        )
-        self.button_settingsname.bind(
-            "<Leave>", 
-            lambda function: (
-                self.hover(
-                    button=self.button_settingsname, 
-                    enter=False, 
-                    message=self.t_settings_choose_current
-                )
-            )
-        )
     
+    def create_window_camera(self):
+     
+        self.window_camera = tk.Toplevel(self.root)
+        self.window_camera.title("Cameras")
+    
+        # sets the geometry of toplevel
+        self.working_cams = [self.t_cam_choose]
+        self.preview_running = False
+        self.update_cams()
+        print(self.working_cams)
+        self.cam_n = len(self.working_cams) + 1
+        self.window_coord = 100*self.cam_n, 200
+        self.window_camera.geometry('%dx%d' % self.window_coord)
+        
+        # For all cams
+        self.button_preview = tk.Button(self.window_camera,
+                state="disable",
+                text=self.t_preview,
+                width=15,
+                command = self.toggle_preview)
+        
+
+        # --- CREATE WIDGET DICTS --- #
+        self.cap = {}
+        self.dropdown_camera = {}
+        self.button_open_camera = {}
+        self.button_settingsname = {}
+        self.button_loadsettings = {}
+        self.settings_path = {}
+        self.settings_path_short = {}
+
+        # --- CREATE WIDGETS FOR EACH CAMERA --- #
+        for cam in self.working_cams:
+            self.cam_opened[cam] = False
+            self.settings_path[cam] = ""
+            self.settings_path_short[cam] = ""
+
+            # Define lambda functions
+            toggle_cam_func = lambda x = cam: self.toggle_camera(x)
+            settings_choose = lambda x = cam: self.get_file(x)
+            settings_load = lambda x = cam: self.load_settings(x)
+
+            self.dropdown_camera[cam] = ttk.Combobox(self.window_camera,
+                state="readonly",
+                justify=tk.CENTER,
+                width=16,
+                values=self.working_cams)
+            self.dropdown_camera[cam].current(cam)
+            self.button_open_camera[cam] = tk.Button(self.window_camera, 
+                text=self.t_cam_open,
+                width=15,
+                command = toggle_cam_func) 
+            self.button_settingsname[cam] = tk.Button(self.window_camera, 
+                text=self.t_settings_choose[0], 
+                width=15,
+                command = settings_choose)
+            self.button_loadsettings[cam] = tk.Button(self.window_camera, 
+                text=self.t_settings_load, 
+                width=15,
+                command = settings_load)
+
+            self.dropdown_camera[cam].grid_configure(row=1, column=cam, pady=(7,0), sticky="e")
+            self.button_open_camera[cam].grid(row=2, column=cam, sticky="e")
+            self.button_settingsname[cam].grid(row=3, column=cam, sticky="e")
+            self.button_loadsettings[cam].grid(row=4, column=cam, sticky="e")
+            self.dropdown_camera[cam].config(values=self.working_cams)
+
+            # Bindings
+            lambda_settings_enter = lambda function, x = cam: self.hover(
+                button=self.button_settingsname[x], 
+                enter=True, 
+                message=self.settings_path_short[x]
+                )
+            lambda_settings_leave = lambda function, x = cam: self.hover(
+                button=self.button_settingsname[x], 
+                enter=False, 
+                message=self.t_settings_choose_current[x]
+                )
+
+            self.button_settingsname[cam].bind(
+                "<Enter>", 
+                lambda_settings_enter
+            )
+            self.button_settingsname[cam].bind(
+                "<Leave>", 
+                lambda_settings_leave
+            )
+
+        self.button_preview.grid(row=0, column=0, pady=(20,20), columnspan=self.cam_n)
+
+
+
+        # """Disable camera buttons"""
+        # widgets_cam_enable = [
+        #     button_preview,
+        #     # button_start
+        # ]
+        # widgets_cam_disable = [
+        #     button_loadsettings,
+        #     button_preview,
+        #     # button_start
+        # ]
+
+        # # Bindings
+        # for widget in widgets_cam_disable:
+        #         widget.configure(state='disable')
+    def update_cams(self):
+        self.working_cams = []
+        [self.available_cams, self.working_cams, self.non_working_cams] = utils.list_ports()
+        for port in list(list_ports.comports()):
+            self.working_serial.append(port.device)
+        self.working_cams_original = self.working_cams.copy()
+        # self.working_cams.insert(0, self.t_cam_choose)
+
+    def toggle_camera(self, cam):
+        if not self.cam_opened[cam]:
+                self.cam_opened[cam] = True
+                self.dropdown_camera[cam].config(state="disabled")
+                self.button_open_camera[cam].config(text=self.t_cam_close)
+                self.cap[cam] = cv2.VideoCapture(cam)
+                print(self.cap)
+                print(self.cap[cam])
+                # for widget in self.widgets_cam_enable:
+                #     widget.configure(state='normal')
+        elif self.cam_opened[cam]: 
+            self.cam_opened[cam] = False
+            self.dropdown_camera[cam].config(state="readonly")
+            self.button_open_camera[cam].config(text=self.t_cam_open)
+            self.cap[cam].release()
+            cv2.destroyAllWindows()
+            # for widget in self.widgets_cam_disable:
+            #     widget.configure(state='disable')
+        # else:
+        #     messagebox.showinfo(title=None, message=self.t_cam_choose)
+        #     return
+        if any(self.cam_opened):
+            self.button_preview.configure(state='normal')
+        else:
+            self.button_preview.configure(state='disabled')
+
+    def toggle_preview(self):
+        """Toggles Preview Start/Stop state"""
+        if self.preview_running == False: # otherwise it starts
+            self.preview_running = True
+            self.button_preview.config(text = self.t_preview_stop, bg="red")
+            # self.button_start.config(state="disabled")
+            print("Caps: ", self.cap)
+            while self.preview_running:
+                for cam in self.cap:
+                    ret, frame = self.cap[cam].read() # Capture frame-by-frame
+                    if ret == True:
+                        cv2.imshow("Cam %d" % cam, frame)
+                if video.check_cv_break(self.cam_opened):
+                    break
+                self.root.update() # Needed to process new events
+                self.window_camera.update()
+        
+        if self.preview_running == True: # if the experiment is running, it stops
+            cv2.destroyAllWindows() # Just needs any input, though it's not using it here...
+            self.preview_running = False
+            self.button_preview.config(text=self.t_preview, bg="green")
+            # self.button_start.config(state="normal")
+
+
+    def create_window_serial(self):
+     
+        # Toplevel object which will
+        self.window_serial = tk.Toplevel(self.root)
+    
+        # sets the title of the
+        # Toplevel widget
+        self.window_serial.title("Cameras")
+    
+        # sets the geometry of toplevel
+        self.serial_n = len(self.working_serial)
+        self.window_serial_coord = 100*self.cam_n, 200
+        self.window_serial.geometry('%dx%d' % self.window_serial_coord)
 
     def hover(self, button, enter, message):
         if message == "":
@@ -254,18 +373,11 @@ class bux_recorder():
         else:
             button.configure(text=message)
 
-    def update_lists(self):
-        self.working_cams = []
+    def update_serial(self):
         self.working_serial = []
-        [self.available_cams, self.working_cams, self.non_working_cams] = utils.list_ports()
-        for port in list(list_ports.comports()):
-            self.working_serial.append(port.device)
         self.working_serial_original = self.working_serial.copy()
         self.working_serial.insert(0, self.t_serial_choose)
-        self.working_cams_original = self.working_cams.copy()
-        self.working_cams.insert(0, self.t_cam_choose)
-        self.dropdown_camera.config(values=self.working_cams)
-        self.dropdown_serial.config(values=self.working_serial)
+        # self.dropdown_serial.config(values=self.working_serial)
 
     def toggle_serial(self, serial):
         if not self.serial_opened:
@@ -297,47 +409,7 @@ class bux_recorder():
         print(message)
         self.ser.send(message)
         print(self.ser.receive())
-    
-    def toggle_camera(self, n):
-        if not self.cam_opened:
-            if not n.isnumeric():
-                self.dropdown_camera.config(state="readonly")
-                messagebox.showinfo(title=None, message=self.t_cam_choose)
-                return
-            else:
-                self.cam_opened = True
-                self.dropdown_camera.config(state="disabled")
-                self.button_open_camera.config(text=self.t_cam_close)
-                self.cap = cv2.VideoCapture(int(n))
-                for widget in self.widgets_cam_enable:
-                    widget.configure(state='normal')
-        elif self.cam_opened: 
-            self.cam_opened = False
-            self.dropdown_camera.config(state="readonly")
-            self.button_open_camera.config(text=self.t_cam_open)
-            self.cap.release()
-            cv2.destroyAllWindows()
-            for widget in self.widgets_cam_disable:
-                widget.configure(state='disable')
 
-    def preview_toggle(self):
-        """Toggles Preview Start/Stop state"""
-        if self.preview_running == False: # otherwise it starts
-            self.preview_running = True
-            self.button_preview.config(text = self.t_preview_stop, bg="red")
-            self.button_start.config(state="disabled")
-            
-            while self.preview_running:
-                video.read_frame(self.cap, out = False)
-                if video.check_cv_break(self.cam_opened):
-                    break
-                self.root.update() # Needed to process new events
-        
-        if self.preview_running == True: # if the experiment is running, it stops
-            cv2.destroyAllWindows() # Just needs any input, though it's not using it here...
-            self.preview_running = False
-            self.button_preview.config(text=self.t_preview, bg="green")
-            self.button_start.config(state="normal")
 
     def toggle(self):
         """Toggles Start/Stop state"""
@@ -398,38 +470,38 @@ class bux_recorder():
         self.t_dir_choose_current = self.t_dir_choose[1]
         self.button_dirname.config(text=self.t_dir_choose_current)
         
-    def get_file(self):
-        self.settings_path = tk.filedialog.askopenfilename(
-            parent=self.root,
+    def get_file(self, cam):
+        self.settings_path[cam] = tk.filedialog.askopenfilename(
+            parent=self.window_camera,
             initialdir="/home/",
             title=self.t_settings_choose[0])
         tk.Tk().withdraw()
-        if (len(self.settings_path) - 25 <= 0):
+        if (len(self.settings_path[cam]) - 20 <= 0):
             cutoff = 0
         else: 
-            cutoff = len(self.settings_path) - 25
-        self.settings_path_short = (self.settings_path[:cutoff] and '..') + self.settings_path[cutoff:] 
-        self.t_settings_choose_current = self.t_settings_choose[1]
-        self.button_settingsname.config(text=self.t_settings_choose_current)
-        self.button_loadsettings.configure(state='normal')
+            cutoff = len(self.settings_path[cam]) - 20
+        self.settings_path_short[cam] = (self.settings_path[cam][:cutoff] and '..') + self.settings_path[cam][cutoff:] 
+        self.t_settings_choose_current[cam] = self.t_settings_choose[1]
+        self.button_settingsname[cam].config(text=self.t_settings_choose_current[cam])
+        self.button_loadsettings[cam].configure(state='normal')
 
-    def load_settings(self):
-        self.settings = toml.load(self.settings_path)
-        for key, value in self.settings.items():
+    def load_settings(self, cam):
+        self.settings[cam] = toml.load(self.settings_path[cam])
+        for key, value in self.settings[cam].items():
             cv_key = "cv2." + key
             print(cv_key, value)
-            self.cap.set(eval(cv_key), value)
-            print(self.cap.get(eval(cv_key)))
+            self.cap[cam].set(eval(cv_key), value)
+            print(self.cap[cam].get(eval(cv_key)))
     
     def close(self):
         if messagebox.askokcancel("Quit", self.t_quit):
-            if self.cam_opened:
-                self.cam_opened = False
-                self.cap.release()
-                cv2.destroyAllWindows()
-                exit()
-            else:
-                exit()
+            if any(self.cam_opened):
+                for cam in self.cam_opened:
+                    if cam:
+                        cam = False
+                        self.cap[cam].release()
+            cv2.destroyAllWindows()
+            exit()
         
 
     def run(self):
