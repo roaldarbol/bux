@@ -40,6 +40,12 @@ def handle_focus_out(button):
     full_name_entry.config(fg='grey')
     full_name_entry.insert(0, "Example: Joe Bloggs")
 
+def hover(button, enter, message):
+    if message == "":
+        return
+    else:
+        button.configure(text=message)
+
 def list_ports():
     """
     Test the ports and returns a tuple with the available ports and the ones that are working.
