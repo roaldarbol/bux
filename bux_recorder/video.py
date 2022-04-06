@@ -27,11 +27,12 @@ class CameraWindow():
         self.window_camera.geometry('%dx%d+%d+%d' % self.window_coord)
         
         # For all cams
-        self.button_preview = tk.Button(self.window_camera,
-                state="disable",
-                text=self.labels["t_preview"],
-                width=15,
-                command = self.toggle_preview)
+        self.button_preview = tk.Button(
+            self.window_camera,
+            state="disable",
+            text=self.labels["t_preview"],
+            width=15,
+            command = self.toggle_preview)
         
 
         # --- CREATE WIDGET DICTS --- #
@@ -55,21 +56,25 @@ class CameraWindow():
             settings_choose = lambda x = cam: self.get_file(x)
             settings_load = lambda x = cam: self.load_settings(x)
 
-            self.dropdown_camera[cam] = ttk.Combobox(self.window_camera,
+            self.dropdown_camera[cam] = ttk.Combobox(
+                self.window_camera,
                 state="readonly",
                 justify=tk.CENTER,
                 width=16,
                 values=self.working_cams)
             self.dropdown_camera[cam].current(cam)
-            self.button_open_camera[cam] = tk.Button(self.window_camera, 
+            self.button_open_camera[cam] = tk.Button(
+                self.window_camera, 
                 text=self.labels["t_cam_open"],
                 width=15,
                 command = toggle_cam_func) 
-            self.button_settingsname[cam] = tk.Button(self.window_camera, 
+            self.button_settingsname[cam] = tk.Button(
+                self.window_camera, 
                 text=self.labels["t_settings_choose"][0], 
                 width=15,
                 command = settings_choose)
-            self.button_loadsettings[cam] = tk.Button(self.window_camera, 
+            self.button_loadsettings[cam] = tk.Button(
+                self.window_camera, 
                 text=self.labels["t_settings_load"], 
                 width=15,
                 command = settings_load)

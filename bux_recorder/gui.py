@@ -61,6 +61,7 @@ class bux_recorder():
         """ Create the main UI window"""
         self.root = tk.Tk()
         self.root.title('Bux Recorder')
+        
         # To get button height and width in pixels: https://stackoverflow.com/a/46286221/13240268
         self.colwidth = 180
         self.pad = 25
@@ -77,44 +78,40 @@ class bux_recorder():
 
         """Create GUI Elements"""
         # === TOP PANEL === #
-        self.label_title = tk.Label(self.root,
+        self.label_title = tk.Label(
+            self.root,
             text="BUX",
             justify=tk.CENTER,
             font=("Avenir", 44)
             # height=70
         )
-        self.button_window_camera = tk.Button(self.root, 
+        self.button_window_camera = tk.Button(
+            self.root, 
             text = self.labels["t_cam"], 
             width=15,
-            command = lambda: (
-                video.CameraWindow(
-                    labels=self.labels, 
-                    coordinates=self.gui_coordinates,
-                    toplevel=self.root)
-            )
+            command = self.create_window_cam
         )
-        self.button_window_serial = tk.Button(self.root, 
+        self.button_window_serial = tk.Button(
+            self.root, 
             text = self.labels["t_serial"], 
             width=15,
-            command = lambda: (
-                serial_connection.SerialWindow(
-                    labels=self.labels, 
-                    coordinates=self.gui_coordinates,
-                    toplevel=self.root)
-            )
+            command = self.create_window_serial
         )
         
         # === BOTTOM PANEL === #
-        self.button_dirname = tk.Button(self.root, 
+        self.button_dirname = tk.Button(
+            self.root, 
             text = self.t_dir_choose[0], 
             width=15,
             command = self.get_dir)
-        self.button_start = tk.Button(self.root, 
+        self.button_start = tk.Button(
+            self.root, 
             text=self.t_start,
             width=15,
             bg = "green",
             command = self.toggle)
-        self.sysinfo = tk.Label(self.root,
+        self.sysinfo = tk.Label(
+            self.root,
             text="OS: " + utils.get_platform(),
             font=('TkDefaultFont', 8)
         )
@@ -166,6 +163,20 @@ class bux_recorder():
                 )
             )
         )
+
+    def create_window_cam(self):
+        self.window_cam = video.CameraWindow(
+            labels=self.labels, 
+            coordinates=self.gui_coordinates,
+            toplevel=self.root
+            )
+    
+    def create_window_serial(self):
+        self.window_serial = serial_connection.SerialWindow(
+            labels=self.labels, 
+            coordinates=self.gui_coordinates,
+            toplevel=self.root
+            )
 
     def toggle(self):
         """Toggles Start/Stop state"""
