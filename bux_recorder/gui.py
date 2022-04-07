@@ -11,6 +11,7 @@ import tkinter.font as font
 import toml
 import cv2
 from serial_mailman.mailman import MailMan
+import asyncio
 
 # From the bux package
 import bux_recorder.label_text as label_text
@@ -184,17 +185,17 @@ class bux_recorder():
             # self.ser = serial_connection.serial_connection("usb")
             # self.ser.connect_device()
             self.running = True
-            self.button_start.config(text = self.t_stop, bg="red")
-            self.button_preview.config(state="disabled")
+            self.button_start.config(text = self.labels["t_stop"], bg="red")
+            # self.button_preview.config(state="disabled")
             self.experimental_loop()
-            self.out.release()
+            # self.out.release()
             self.root.update()
         
         if self.running == True: # if the experiment is running, it stops
             # bux.experiment.close()
             cv2.destroyAllWindows()
-            self.button_start.config(text=self.t_start, bg="green")
-            self.button_preview.config(state="disabled")
+            self.button_start.config(text=self.labels["t_start"], bg="green")
+            # self.button_preview.config(state="disabled")
             # self.ser.close()
             # print("Serial disconnected")
             self.running = False
@@ -203,25 +204,47 @@ class bux_recorder():
         """Initiates the experimental loop"""
         self.start_dt = dt.datetime.now().strftime('%Y-%m-%d_%H.%M.%S')
         # INSERT ERROR STUFF IF PATH DOESN'T EXIST
-        self.videoname = os.path.join(self.path, '%s.mp4'%(self.start_dt))
-        self.csvname = os.path.join(self.path, '%s.csv'%(self.start_dt))
+        self.videoname = {}
+        self.csvname = {}
+        self.fps = {}
+        self.vid_width = {}
+        self.vid_height = {}
+        self.fourcc = {}
+        self.out = {}
+        print(self.window_cam.cap)
+        for cap in self.window_cam.cap:
+            print(self.window_cam.cap[cap])
+            self.videoname[cap] = os.path.join(self.path, '%s_cam-%s.avi'%(self.start_dt, cap))
+            self.csvname[cap] = os.path.join(self.path, '%s_cam-%s.csv'%(self.start_dt, cap))
+            print(self.videoname[cap])
+            print(dt.datetime.now())
         
-        # Get the width and height of frame
-        width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH) + 0.5)
-        height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT) + 0.5)
+            # Get the width and height of frame
+            self.fps[cap] = int(self.window_cam.cap[cap].get(cv2.CAP_PROP_FPS))
+            self.vid_width[cap] = int(self.window_cam.cap[cap].get(cv2.CAP_PROP_FRAME_WIDTH) + 0.5)
+            self.vid_height[cap] = int(self.window_cam.cap[cap].get(cv2.CAP_PROP_FRAME_HEIGHT) + 0.5)
 
-        # Define the codec and create VideoWriter object
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v') # Be sure to use the lower case
-        self.out = cv2.VideoWriter(self.videoname, fourcc, 30.0, (width, height))
+            # # Define the codec and create VideoWriter object
+            self.fourcc[cap] = cv2.VideoWriter_fourcc(*'mp4v') # Be sure to use the lower case
+            self.out[cap] = cv2.VideoWriter(
+                self.videoname[cap], 
+                self.fourcc[cap], 
+                self.fps[cap], 
+                (self.vid_width[cap], self.vid_height[cap])
+                )
+            print(self.fourcc[cap],self.fps[cap], self.vid_width[cap], self.vid_height[cap])
 
-        # Create txt or csv file here
+        # # Create txt or csv file here
 
         while self.running:
-            video.read_frame(self.cap, out = self.out)
-            if video.check_cv_break(self.cam_opened):
+            for cap in self.window_cam.cap:
+                # print(dt.datetime.now(), "%s"%(cap))
+                video.read_frame(self.window_cam.cap[cap], out = self.out[cap])
+            if video.check_cv_break(self.window_cam.cam_opened):
                 break
             self.root.update() # Needed to process new events
 
+    
     def get_dir(self):
         """Ask user to input directory"""
         self.path = tk.filedialog.askdirectory(
