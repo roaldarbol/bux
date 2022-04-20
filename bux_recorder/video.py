@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+import logging
 import cv2
 import label_text
 import bux_recorder.utils as utils
@@ -7,6 +8,7 @@ import bux_recorder.utils as utils
 class CameraWindow():
     def __init__(self, labels, coordinates, toplevel=None):
         self.labels = labels
+        self.log = logging.getLogger('debugger')
         if toplevel is None:
             self.window_camera = tk.Tk()
         else:
@@ -136,12 +138,10 @@ class CameraWindow():
     def toggle_camera(self, cam):
         if not self.cam_opened[cam]:
                 self.cam_opened[cam] = True
-                print(self.cam_opened[cam])
                 self.dropdown_camera[cam].config(state="disabled")
                 self.button_open_camera[cam].config(text=self.labels["t_cam_close"])
                 self.cap[cam] = cv2.VideoCapture(cam)
-                print(self.cap)
-                print(self.cap[cam])
+                self.log.info('Camera %s opened', cam)
                 # for widget in self.widgets_cam_enable:
                 #     widget.configure(state='normal')
         elif self.cam_opened[cam]: 
@@ -150,6 +150,7 @@ class CameraWindow():
             self.button_open_camera[cam].config(text=self.labels["t_cam_open"])
             self.cap[cam].release()
             cv2.destroyAllWindows()
+            self.log.info('Camera %s closed', cam)
             # for widget in self.widgets_cam_disable:
             #     widget.configure(state='disable')
         # else:

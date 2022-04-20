@@ -12,46 +12,26 @@ import toml
 import cv2
 from serial_mailman.mailman import MailMan
 import asyncio
+import logging
 
 # From the bux package
 import bux_recorder.label_text as label_text
 import bux_recorder.utils as utils
 import bux_recorder.video as video
 import bux_recorder.serial_connection as serial_connection
-
-raspberry_pi = utils.is_raspberrypi()
-if raspberry_pi == False:
-    print("You're not on a Raspberry Pi")
-
-
+import bux_recorder.logger as logger
 
 # Functions
 class bux_recorder():
     def __init__(self):
-        self.t_dir_choose = ["Select directory", "Directory chosen"]
-        self.t_dir_choose_current = self.t_dir_choose[0]
-        self.t_update = "\u27F3"
-        self.t_cam_choose = "Choose camera"
-        self.t_cam_open = "Open camera"
-        self.t_cam_close = "Close camera"
-        self.t_serial_choose = "Choose serial"
-        self.t_serial_open = "Open serial"
-        self.t_serial_close = "Close serial"
-        self.t_serial_send = "Send to serial"
-        self.t_script_choose = "Choose script"
-        self.t_settings_choose = ["Select settings", "Settings selected"]
-        self.t_settings_choose_current = [self.t_settings_choose[0], self.t_settings_choose[0]]
-        self.t_settings_load = "Load settings"
-        self.t_preview = "Preview"
-        self.t_preview_stop = "Stop preview"
-        self.t_start = "Start recording"
-        self.t_stop = "Stop recording"
-        self.t_quit = "Do you want to quit Bux?"
         self.labels = label_text.create_labels()
-
+        self.log = logging.getLogger('debugger')
+        self.cam_log = logging.getLogger('camera_log')
+        if utils.is_raspberrypi() == False:
+            self.log.info("You're not on a Raspberry Pi")
         self.running = False
         self.cam_opened = {}
-        self.working_serial = [self.t_serial_choose]
+        self.working_serial = self.labels["t_serial_choose"]
         self.serial_opened = False
         self.path = ""
         self.path_short = ""
@@ -102,12 +82,12 @@ class bux_recorder():
         # === BOTTOM PANEL === #
         self.button_dirname = tk.Button(
             self.root, 
-            text = self.t_dir_choose[0], 
+            text = self.labels["t_dir_choose"][0], 
             width=15,
             command = self.get_dir)
         self.button_start = tk.Button(
             self.root, 
-            text=self.t_start,
+            text=self.labels["t_start"],
             width=15,
             bg = "green",
             command = self.toggle)
@@ -160,7 +140,7 @@ class bux_recorder():
                 utils.hover(
                     button=self.button_dirname, 
                     enter=False, 
-                    message=self.t_dir_choose_current
+                    message=self.labels["t_dir_choose_current"]
                 )
             )
         )
@@ -235,11 +215,13 @@ class bux_recorder():
             print(self.fourcc[cap],self.fps[cap], self.vid_width[cap], self.vid_height[cap])
 
         # # Create txt or csv file here
-
+        i = 0
         while self.running:
             for cap in self.window_cam.cap:
                 # print(dt.datetime.now(), "%s"%(cap))
                 video.read_frame(self.window_cam.cap[cap], out = self.out[cap])
+                self.cam_log.info("Cam %s: Frame %s", cap, i)
+                i += 1
             if video.check_cv_break(self.window_cam.cam_opened):
                 break
             self.root.update() # Needed to process new events
@@ -250,18 +232,18 @@ class bux_recorder():
         self.path = tk.filedialog.askdirectory(
             parent=self.root,
             initialdir="/home/",
-            title=self.t_dir_choose[0])
+            title=self.labels["t_dir_choose"][0])
         tk.Tk().withdraw()
         if (len(self.path) - 20 <= 0):
             cutoff = 0
         else: 
             cutoff = len(self.path) - 20
         self.path_short = (self.path[:cutoff] and '..') + self.path[cutoff:] 
-        self.t_dir_choose_current = self.t_dir_choose[1]
-        self.button_dirname.config(text=self.t_dir_choose_current)
+        self.labels["t_dir_choose_current"] = self.labels["t_dir_choose"][1]
+        self.button_dirname.config(text=self.labels["t_dir_choose_current"])
     
     def close(self):
-        if messagebox.askokcancel("Quit", self.t_quit):
+        if messagebox.askokcancel("Quit", self.labels["t_quit"]):
             if any(self.cam_opened):
                 for cam in self.cam_opened:
                     if cam:
