@@ -37,7 +37,7 @@ class CameraWindow():
         # For all cams
         self.button_preview = tk.Button(
             self.window_camera,
-            # state="disable",
+            state="disable",
             text=self.labels["t_preview"],
             width=15,
             command = self.toggle_preview)
@@ -45,7 +45,7 @@ class CameraWindow():
 
         # --- CREATE WIDGET DICTS --- #
         self.cap = {}
-        self.cam_opened = {}
+        self.cams_selected = {}
         self.dropdown_camera = {}
         self.button_open_camera = {}
         self.button_settingsname = {}
@@ -55,7 +55,7 @@ class CameraWindow():
 
         # --- CREATE WIDGETS FOR EACH CAMERA --- #
         for cam in self.working_cams:
-            self.cam_opened[cam] = False
+            self.cams_selected[cam] = False
             self.settings_path[cam] = ""
             self.settings_path_short[cam] = ""
 
@@ -73,7 +73,7 @@ class CameraWindow():
             self.dropdown_camera[cam].current(cam)
             self.button_open_camera[cam] = tk.Button(
                 self.window_camera, 
-                text=self.labels["t_cam_open"],
+                text=self.labels["t_cam_select"],
                 width=15,
                 command = toggle_cam_func) 
             self.button_settingsname[cam] = tk.Button(
@@ -142,27 +142,28 @@ class CameraWindow():
         # self.working_cams.insert(0, self.t_cam_choose)
 
     def toggle_camera(self, cam):
-        if not self.cam_opened[cam]:
-                self.cam_opened[cam] = True
+        if not self.cams_selected[cam]:
+                self.cams_selected[cam] = True
                 self.dropdown_camera[cam].config(state="disabled")
-                self.button_open_camera[cam].config(text=self.labels["t_cam_close"])
-                self.cap[cam] = cv2.VideoCapture(cam)
-                self.log.info('Camera %s opened', cam)
+                self.button_open_camera[cam].config(text=self.labels["t_cam_deselect"])
+                # self.cap[cam] = cv2.VideoCapture(cam)
+                self.log.info('Camera %s selected', cam)
+                print(self.cams_selected)
                 # for widget in self.widgets_cam_enable:
                 #     widget.configure(state='normal')
-        elif self.cam_opened[cam]: 
-            self.cam_opened[cam] = False
+        elif self.cams_selected[cam]: 
+            self.cams_selected[cam] = False
             self.dropdown_camera[cam].config(state="readonly")
-            self.button_open_camera[cam].config(text=self.labels["t_cam_open"])
-            self.cap[cam].release()
-            cv2.destroyAllWindows()
-            self.log.info('Camera %s closed', cam)
+            self.button_open_camera[cam].config(text=self.labels["t_cam_select"])
+            # self.cap[cam].release()
+            # cv2.destroyAllWindows()
+            self.log.info('Camera %s deselected', cam)
             # for widget in self.widgets_cam_disable:
             #     widget.configure(state='disable')
         # else:
         #     messagebox.showinfo(title=None, message=self.t_cam_choose)
         #     return
-        if any(self.cam_opened.values()):
+        if any(self.cams_selected.values()):
             self.button_preview.configure(state='normal')
         else:
             self.button_preview.configure(state='disabled')
@@ -177,44 +178,15 @@ class CameraWindow():
 
             ### MP IMPLEMENTATION
             self.processes = {}
-            self.cams = self.working_cams # Temporary - needs to be editable
+            self.cams_to_open = {k:v for k,v in enumerate(self.cams_selected.values()) if v == True}
 
             # Spawn processes
-            for cam in self.cams:
-                self.processes[cam] = mp.Process(target=video.cam_loop, args=(cam, self.cam_queue, "preview"))
+            for cam in self.cams_to_open:
+                self.processes[cam] = mp.Process(target=video.cam_preview, args=(cam, self.cam_queue))
 
-            # processes = list(processes)
             # Start processes
             for p in self.processes:
-                self.processes[p].start()
-
-
-            #### THREADING IMPLEMENTATION
-            # threads = list()
-            # y = threading.Thread(target=self.window_camera.update)
-            # threads = []
-            # for cam in self.cap:  # starts recording video, opens threads for each camera
-            #     camRecordings = cam_class.CamRecordingThread(cam)
-            #     camRecordings.start()
-            #     threads.append(camRecordings)
-
-            # for camRecordings in threads:
-            #     camRecordings.join()  # make sure that one thread ending doesn't immediately end all the others (before they can dump data in a pickle file)
-
-            # print("finished recordings")
-
-            ### NON-THREADING
-            # while self.preview_running:
-            #     for cam in self.cap:
-            #         ret, frame = self.cap[cam].read() # Capture frame-by-frame
-            #         if ret == True:
-            #             i[cam] += 1
-            #             cv2.imshow("Cam %d" % cam, frame)
-            #             self.cam_log.info("Cam %s: Frame %s", cam, i[cam])
-            #     if self.check_cv_break(self.cam_opened.values()):
-            #         break
-            #     self.window_camera.update() # Needed to process new events
-                
+                self.processes[p].start()    
         
         if self.preview_running == True: # if the experiment is running, it stops
             self.cam_queue.put(1)
@@ -222,11 +194,11 @@ class CameraWindow():
                 self.processes[p].terminate()
                 self.processes[p].join()
             # cv2.destroyAllWindows() # Just needs any input, though it's not using it here...
-            # self.preview_running = False
             self.button_preview.config(text=self.labels["t_preview"], bg="green")
             # self.button_start.config(state="normal")
         
         self.preview_running = not self.preview_running
+
 
     def list_ports(self):
         """
@@ -262,14 +234,14 @@ class CameraWindow():
                 i[cam] += 1
                 cv2.imshow("Cam %d" % cam, frame)
                 self.cam_log.info("Cam %s: Frame %s", cam, i[cam])
-            if self.check_cv_break(self.cam_opened.values()):
+            if self.check_cv_break(self.cams_selected.values()):
                 self.cam_log.info("Cam %s stopped", cam)
                 break
 
-    def check_cv_break(self, cam_opened):
+    def check_cv_break(self, cams_selected):
         if cv2.waitKey(1) & 0xFF == ord('q'):
             return True
-        elif not any(cam_opened):
+        elif not any(cams_selected):
             return True
 
     def get_file(self, cam):

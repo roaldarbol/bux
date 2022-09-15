@@ -1,5 +1,4 @@
 import sys
-import io
 import logging
 import colorlog
 

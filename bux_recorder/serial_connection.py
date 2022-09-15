@@ -3,7 +3,7 @@ import serial
 import tkinter as tk
 from tkinter import ttk
 from serial.tools import list_ports
-from label_text import create_labels
+from bux_recorder.label_text import create_labels
 from serial_mailman.mailman import MailMan
 
 class SerialWindow():
@@ -32,11 +32,13 @@ class SerialWindow():
         self.serial_scripts_raw = {}
         self.serial_scripts_py = {}
         self.serial_opened = {}
+        self.serial_running = {}
         self.dropdown_serial = {}
         self.button_open_serial = {}
         self.dropdown_scripts = {}
         self.text_command = {}
         self.button_send_serial = {}
+        self.button_send_interrupt = {}
 
         # --- CREATE WIDGETS FOR EACH SERIAL DEVICE --- #
         for ser in self.working_serial:
@@ -54,9 +56,15 @@ class SerialWindow():
             )
             lambda_send_serial = lambda x = ser_n: (
                 self.send_serial(
+                    x,
                     self.ser[x],
                     self.dropdown_scripts[x].get(), 
                     self.text_command[x].get()
+                    )
+            )
+            lambda_send_interrupt = lambda x = ser_n: (
+                self.send_interrupt(
+                    self.ser[x]
                     )
             )
 
@@ -85,12 +93,18 @@ class SerialWindow():
                 width=15,
                 command=lambda_send_serial
             )
+            self.button_send_interrupt[ser_n] = tk.Button(self.window_serial, 
+                text=self.labels["t_serial_interrupt"],
+                width=15,
+                command=lambda_send_interrupt
+            )
             
             self.dropdown_serial[ser_n].grid(row=1, column=ser_n, pady=(20,0))
             self.button_open_serial[ser_n].grid(row=2, column=ser_n) 
             self.dropdown_scripts[ser_n].grid(row=3, column=ser_n)
             self.text_command[ser_n].grid(row=4, column=ser_n)
             self.button_send_serial[ser_n].grid(row=5, column=ser_n)
+            self.button_send_interrupt[ser_n].grid(row=6, column=ser_n)
 
             # --- BINDINGS --- #
 
@@ -114,6 +128,7 @@ class SerialWindow():
                 self.serial_scripts_py[serial] = self.serial_scripts_raw[serial].split("'")[1::2]
                 self.serial_scripts_py[serial].insert(0, self.labels["t_script_choose"])
                 self.serial_opened[serial] = True
+                self.serial_running[serial] = False
                 self.dropdown_serial[serial].config(state="disabled")
                 self.button_open_serial[serial].config(text=self.labels["t_serial_close"])
                 self.dropdown_scripts[serial].config(values=self.serial_scripts_py[serial])
@@ -132,16 +147,28 @@ class SerialWindow():
         serial.send("os.listdir()")
         return serial.receive()
 
-    def send_serial(self, serial, script, message):
-        message = script.strip("py") + message
-        print(message)
+    def send_serial(self, ser_n, serial, script, message):
+        if not self.serial_running[ser_n]:
+            message = script.strip("py") + message
+            self.serial_running[ser_n] = not self.serial_running[ser_n]
+            self.button_send_serial[ser_n].config(text=self.labels["t_serial_interrupt"])
+        else: 
+            message = "raise KeyboardInterrupt"
+            self.serial_running[ser_n] = not self.serial_running[ser_n]
+            self.button_send_serial[ser_n].config(text=self.labels["t_serial_send"])
+        # print(message)
         serial.send(message)
-        print(serial.receive())
+        # while self.serial_running[ser_n]:
+        #     print(serial.receive())
+        #     self.window_serial.update()
+
+    def send_interrupt(self, serial):
+        serial.send('\x03')
 
     def run(self):
         self.window_serial.mainloop()
 
 
 # labels = create_labels()
-# win = SerialWindow(labels)
+# win = SerialWindow(labels, [200, 100, 100, 100])
 # win.run()
