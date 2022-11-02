@@ -17,6 +17,7 @@ def create_labels():
     labels["t_serial_send"] = "Send to serial"
     labels["t_serial_interrupt"] = "Interrupt serial"
     labels["t_script_choose"] = "Choose script"
+    labels["t_cam_resolution"] = "Choose resolution"
     labels["t_settings_choose"] = ["Select settings", "Settings selected"]
     labels["t_settings_choose_current"] = [ labels["t_settings_choose"][0], labels["t_settings_choose"][0] ]
     labels["t_settings_load"] = "Load settings"

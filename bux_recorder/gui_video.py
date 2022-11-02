@@ -33,6 +33,8 @@ class CameraWindow():
         self.x, self.y = coordinates[2] + coordinates[0] + 10, coordinates[3]
         self.window_coord = self.w, self.h, self.x, self.y
         self.window_camera.geometry('%dx%d+%d+%d' % self.window_coord)
+
+        self.cam_resolutions = [[800,600], [1280,720]]
         
         # For all cams
         self.button_preview = tk.Button(
@@ -48,6 +50,7 @@ class CameraWindow():
         self.cams_selected = {}
         self.dropdown_camera = {}
         self.button_open_camera = {}
+        self.dropdown_resolution = {}
         self.button_settingsname = {}
         self.button_loadsettings = {}
         self.settings_path = {}
@@ -76,6 +79,12 @@ class CameraWindow():
                 text=self.labels["t_cam_select"],
                 width=15,
                 command = toggle_cam_func) 
+            self.dropdown_resolution[cam] = ttk.Combobox(
+                self.window_camera,
+                state="readonly",
+                justify=tk.CENTER,
+                width=16,
+                values=self.cam_resolutions)
             self.button_settingsname[cam] = tk.Button(
                 self.window_camera, 
                 text=self.labels["t_settings_choose"][0], 
@@ -91,7 +100,8 @@ class CameraWindow():
             self.button_open_camera[cam].grid(row=2, column=cam, sticky="e")
             self.button_settingsname[cam].grid(row=3, column=cam, sticky="e")
             self.button_loadsettings[cam].grid(row=4, column=cam, sticky="e")
-            self.dropdown_camera[cam].config(values=self.working_cams)
+            # self.dropdown_camera[cam].config(values=self.working_cams)
+            self.dropdown_resolution[cam].grid(row=5, column=cam, sticky="e")
 
             # Bindings
             lambda_settings_enter = lambda function, x = cam: utils.hover(
@@ -182,7 +192,7 @@ class CameraWindow():
 
             # Spawn processes
             for cam in self.cams_to_open:
-                self.processes[cam] = mp.Process(target=video.cam_preview, args=(cam, self.cam_queue))
+                self.processes[cam] = mp.Process(target=video.cam_preview, args=(cam, self.cam_queue), kwargs={"resolution" : self.dropdown_resolution[cam].get()})
 
             # Start processes
             for p in self.processes:
