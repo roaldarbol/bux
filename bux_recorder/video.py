@@ -2,6 +2,7 @@ import multiprocessing as mp
 import cv2
 import utils
 import time
+import logging
 
 # https://stackoverflow.com/questions/10862532/opencv-and-multiprocessing
 # https://www.reddit.com/r/learnpython/comments/62ppgp/opencv_grab_images_from_several_cameras_in/
@@ -14,25 +15,28 @@ import time
 
 
 def cam_preview(cam, queue, **kwargs):
+    ret = queue.get()
+    # print(ret, "inside")
     cap = cv2.VideoCapture(cam)
 
-    for name, value in kwargs.items():
-        print('{0} = {1}'.format(name, value))
-
-    vid_height = 600
-    vid_width = 800
-
-    # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, vid_height)
-    # cap.set(cv2.CAP_PROP_FRAME_WIDTH, vid_width)
-    cap.set(cv2.CAP_PROP_BRIGHTNESS, 10)
-    # vid_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    # vid_width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-    print("hi")
-    print(vid_width, vid_height)
-    print(
-        cap.get(cv2.CAP_PROP_FRAME_WIDTH), 
-        cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    )
+    # for name, value in kwargs.items():
+    #     print('{0} = {1}'.format(name, value))
+    vid_width = ret['resolution'][1]
+    vid_height = ret['resolution'][0]
+    new_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    new_width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, vid_height)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, vid_width)
+    ret['resolution'] = [new_height, new_width]
+    queue.put(ret)
+    # cap.set(cv2.CAP_PROP_BRIGHTNESS, 10)
+    # print(cap.get(cv2.CAP_PROP_FRAME_HEIGHT), cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    # print("hi")
+    # print(vid_height, vid_width)
+    # print(
+    #     cap.get(cv2.CAP_PROP_FRAME_WIDTH), 
+    #     cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    # )
     # print(vid_width/2, vid_height/2)
     # new_vid_height = [
     #     int(vid_height/2 - vid_height/4),

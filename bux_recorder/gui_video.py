@@ -35,6 +35,11 @@ class CameraWindow():
         self.window_camera.geometry('%dx%d+%d+%d' % self.window_coord)
 
         self.cam_resolutions = [[800,600], [1280,720]]
+        self.cam_settings = {}
+        self.generic_settings = {
+            "resolution": [800,600],
+            "other_specs": 2
+            }
         
         # For all cams
         self.button_preview = tk.Button(
@@ -59,6 +64,7 @@ class CameraWindow():
         # --- CREATE WIDGETS FOR EACH CAMERA --- #
         for cam in self.working_cams:
             self.cams_selected[cam] = False
+            self.cam_settings[cam] = self.generic_settings
             self.settings_path[cam] = ""
             self.settings_path_short[cam] = ""
 
@@ -123,7 +129,6 @@ class CameraWindow():
                 "<Leave>", 
                 lambda_settings_leave
             )
-
             
         for widgets in self.window_camera.winfo_children():
             widgets.grid_configure(padx=self.pad, pady=(2))
@@ -185,6 +190,7 @@ class CameraWindow():
             # self.button_start.config(state="disabled")
             print("Caps: ", self.cap)
             i = [0] * len(self.cap)
+            print(self.cam_settings)
 
             ### MP IMPLEMENTATION
             self.processes = {}
@@ -192,6 +198,7 @@ class CameraWindow():
 
             # Spawn processes
             for cam in self.cams_to_open:
+                self.cam_queue.put(self.cam_settings[cam])
                 self.processes[cam] = mp.Process(target=video.cam_preview, args=(cam, self.cam_queue), kwargs={"resolution" : self.dropdown_resolution[cam].get()})
 
             # Start processes
@@ -199,8 +206,10 @@ class CameraWindow():
                 self.processes[p].start()    
         
         if self.preview_running == True: # if the experiment is running, it stops
-            self.cam_queue.put(1)
+            # ret = {'foo': False}
+            # self.cam_queue.put(1)
             for p in self.processes:
+                self.cam_settings[p] = self.cam_queue.get()
                 self.processes[p].terminate()
                 self.processes[p].join()
             # cv2.destroyAllWindows() # Just needs any input, though it's not using it here...
@@ -208,6 +217,7 @@ class CameraWindow():
             # self.button_start.config(state="normal")
         
         self.preview_running = not self.preview_running
+        # print(self.cam_queue.get('foo'))
 
 
     def list_ports(self):
@@ -236,17 +246,17 @@ class CameraWindow():
             dev_port +=1
         return available_ports,working_ports,non_working_ports
 
-    def preview_vid(self, cam):
-        i = [0] * len(self.cap)
-        while self.preview_running:
-            ret, frame = self.cap[cam].read() # Capture frame-by-frame
-            if ret == True:
-                i[cam] += 1
-                cv2.imshow("Cam %d" % cam, frame)
-                self.cam_log.info("Cam %s: Frame %s", cam, i[cam])
-            if self.check_cv_break(self.cams_selected.values()):
-                self.cam_log.info("Cam %s stopped", cam)
-                break
+    # def preview_vid(self, cam):
+    #     i = [0] * len(self.cap)
+    #     while self.preview_running:
+    #         ret, frame = self.cap[cam].read() # Capture frame-by-frame
+    #         if ret == True:
+    #             i[cam] += 1
+    #             cv2.imshow("Cam %d" % cam, frame)
+    #             self.cam_log.info("Cam %s: Frame %s", cam, i[cam])
+    #         if self.check_cv_break(self.cams_selected.values()):
+    #             self.cam_log.info("Cam %s stopped", cam)
+    #             break
 
     def check_cv_break(self, cams_selected):
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -270,8 +280,8 @@ class CameraWindow():
         self.button_loadsettings[cam].configure(state='normal')
 
     def load_settings(self, cam):
-        self.settings[cam] = toml.load(self.settings_path[cam])
-        for key, value in self.settings[cam].items():
+        self.cam_settings[cam] = toml.load(self.cam_settings_path[cam])
+        for key, value in self.cam_settings[cam].items():
             cv_key = "cv2." + key
             print(cv_key, value)
             self.cap[cam].set(eval(cv_key), value)
