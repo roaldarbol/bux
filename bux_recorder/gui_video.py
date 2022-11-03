@@ -25,21 +25,31 @@ class CameraWindow():
         self.cam_queue = mp.Queue()
         self.working_cams = [self.labels["t_cam_choose"]]
         self.preview_running = False
+
+        self.default_cam_resolutions = [
+            "640, 480",
+            "800, 600", 
+            "1280, 720",
+            "1920, 1280"
+        ]
+        self.cam_resolution_pre = {}
+        self.cam_resolutions = {}
+        self.cam_settings = {}
+        self.generic_settings = {
+            "res_width": 800,
+            "res_height": 600
+        }
+
         self.update_cams()
+        self.get_camera_params()
+
         self.colwidth = 180
         self.pad = 10
         self.cam_n = len(self.working_cams)
-        self.w, self.h = self.colwidth*self.cam_n + self.pad*2*self.cam_n, 220
+        self.w, self.h = self.colwidth*self.cam_n + self.pad*2*self.cam_n, 250
         self.x, self.y = coordinates[2] + coordinates[0] + 10, coordinates[3]
         self.window_coord = self.w, self.h, self.x, self.y
         self.window_camera.geometry('%dx%d+%d+%d' % self.window_coord)
-
-        self.cam_resolutions = [[800,600], [1280,720]]
-        self.cam_settings = {}
-        self.generic_settings = {
-            "resolution": [800,600],
-            "other_specs": 2
-            }
         
         # For all cams
         self.button_preview = tk.Button(
@@ -90,7 +100,9 @@ class CameraWindow():
                 state="readonly",
                 justify=tk.CENTER,
                 width=16,
-                values=self.cam_resolutions)
+                values=self.cam_resolutions[cam])
+            ind = self.cam_resolutions[cam].index(self.cam_resolution_pre[cam])
+            self.dropdown_resolution[cam].current(ind)
             self.button_settingsname[cam] = tk.Button(
                 self.window_camera, 
                 text=self.labels["t_settings_choose"][0], 
@@ -106,8 +118,7 @@ class CameraWindow():
             self.button_open_camera[cam].grid(row=2, column=cam, sticky="e")
             self.button_settingsname[cam].grid(row=3, column=cam, sticky="e")
             self.button_loadsettings[cam].grid(row=4, column=cam, sticky="e")
-            # self.dropdown_camera[cam].config(values=self.working_cams)
-            self.dropdown_resolution[cam].grid(row=5, column=cam, sticky="e")
+            self.dropdown_resolution[cam].grid_configure(row=5, column=cam, pady=(7,0), sticky="e")
 
             # Bindings
             lambda_settings_enter = lambda function, x = cam: utils.hover(
@@ -154,7 +165,28 @@ class CameraWindow():
         self.working_cams = []
         [self.available_cams, self.working_cams, self.non_working_cams] = self.list_ports()
         self.working_cams_original = self.working_cams.copy()
-        # self.working_cams.insert(0, self.t_cam_choose)
+        for cam in self.working_cams:
+            self.cam_settings[cam] = self.generic_settings
+            cap = cv2.VideoCapture(cam)
+            h = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+            w = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+            cap.release()
+            self.cam_settings[cam]['res_height'] = h
+            self.cam_settings[cam]['res_width'] = w
+        print(self.cam_settings, "here")
+            # self.cam_settings[cam]['res_width'] = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+            # w = self.cam_settings[cam]['res_width']
+            # h = self.cam_settings[cam]['res_height']
+
+    def get_camera_params(self):
+        for cam in self.working_cams:
+            self.cam_resolutions[cam] = self.default_cam_resolutions
+            h = self.cam_settings[cam]['res_height']
+            w = self.cam_settings[cam]['res_width']
+            resolution = str(int(w)) + ", " + str(int(h))
+            self.cam_resolution_pre[cam] = resolution
+            if resolution not in self.cam_resolutions[cam]:
+                self.self.cam_resolutions[cam] = [resolution] + self.cam_resolutions[cam]
 
     def toggle_camera(self, cam):
         if not self.cams_selected[cam]:
@@ -190,14 +222,22 @@ class CameraWindow():
             # self.button_start.config(state="disabled")
             print("Caps: ", self.cap)
             i = [0] * len(self.cap)
-            print(self.cam_settings)
 
             ### MP IMPLEMENTATION
             self.processes = {}
             self.cams_to_open = {k:v for k,v in enumerate(self.cams_selected.values()) if v == True}
 
+            # Add settings
+            for cam in self.cams_to_open:
+                res =  self.dropdown_resolution[cam].get()
+                res = res.split(',')
+                res = [int(n) for n in res]
+                self.cam_settings[cam]['res_width'] = res[0]
+                self.cam_settings[cam]['res_height'] = res[1]
+
             # Spawn processes
             for cam in self.cams_to_open:
+                # self.cam_settings[cam]['resolution'] = self.dropdown_resolution[cam].get()
                 self.cam_queue.put(self.cam_settings[cam])
                 self.processes[cam] = mp.Process(target=video.cam_preview, args=(cam, self.cam_queue), kwargs={"resolution" : self.dropdown_resolution[cam].get()})
 
@@ -245,18 +285,6 @@ class CameraWindow():
                     available_ports.append(dev_port)
             dev_port +=1
         return available_ports,working_ports,non_working_ports
-
-    # def preview_vid(self, cam):
-    #     i = [0] * len(self.cap)
-    #     while self.preview_running:
-    #         ret, frame = self.cap[cam].read() # Capture frame-by-frame
-    #         if ret == True:
-    #             i[cam] += 1
-    #             cv2.imshow("Cam %d" % cam, frame)
-    #             self.cam_log.info("Cam %s: Frame %s", cam, i[cam])
-    #         if self.check_cv_break(self.cams_selected.values()):
-    #             self.cam_log.info("Cam %s stopped", cam)
-    #             break
 
     def check_cv_break(self, cams_selected):
         if cv2.waitKey(1) & 0xFF == ord('q'):

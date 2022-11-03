@@ -15,20 +15,21 @@ import logging
 
 
 def cam_preview(cam, queue, **kwargs):
-    ret = queue.get()
-    # print(ret, "inside")
+    cam_settings = queue.get()
     cap = cv2.VideoCapture(cam)
 
     # for name, value in kwargs.items():
     #     print('{0} = {1}'.format(name, value))
-    vid_width = ret['resolution'][1]
-    vid_height = ret['resolution'][0]
-    new_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    new_width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, vid_height)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, vid_width)
-    ret['resolution'] = [new_height, new_width]
-    queue.put(ret)
+    vid_width = cam_settings['res_width']
+    vid_height = cam_settings['res_height']
+    # new_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    # new_width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, cam_settings['res_height'])
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, cam_settings['res_width'])
+    cap.set(cv2.CAP_PROP_FPS, 9)
+    # if cam == 1:
+    #     ret['resolution'] = [new_height, new_width]
+    queue.put(cam_settings)
     # cap.set(cv2.CAP_PROP_BRIGHTNESS, 10)
     # print(cap.get(cv2.CAP_PROP_FRAME_HEIGHT), cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     # print("hi")
@@ -62,12 +63,12 @@ def cam_preview(cam, queue, **kwargs):
             #     ]
             cv2.imshow('Cam %d' % cam, grayFrame)
             cv2.waitKey(1)
-            if set_res_attempt == 0 and cap.get(cv2.CAP_PROP_FRAME_HEIGHT) != vid_height:
-                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, vid_height)
-                cap.set(cv2.CAP_PROP_FRAME_WIDTH, vid_width)
-                set_res_attempt = 1 # If it isn't possible to set the new resolution, prevent trying again
-            elif cap.get(cv2.CAP_PROP_FRAME_HEIGHT) == vid_height:
-                set_res_attempt = 0
+            # if set_res_attempt == 0 and cap.get(cv2.CAP_PROP_FRAME_HEIGHT) != vid_height:
+            #     # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, vid_height)
+            #     # cap.set(cv2.CAP_PROP_FRAME_WIDTH, vid_width)
+            #     set_res_attempt = 1 # If it isn't possible to set the new resolution, prevent trying again
+            # elif cap.get(cv2.CAP_PROP_FRAME_HEIGHT) == vid_height:
+            #     set_res_attempt = 0
             
         # THIS NEEDS TO GO INTO A GRACEFUL SHUTDOWN METHOD
         # if queue.empty() is not True:
