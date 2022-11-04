@@ -207,20 +207,26 @@ class bux_recorder():
         ### MP IMPLEMENTATION
         self.processes = {}
         self.cams_to_open = {k:v for k,v in enumerate(self.window_cam.cams_selected.values()) if v == True}
-        print(self.cams_to_open)
+
+        # Add settings
+        for cam in self.cams_to_open:
+            res =  self.window_cam.dropdown_resolution[cam].get()
+            res = res.split(',')
+            res = [int(n) for n in res]
+            self.window_cam.cam_settings[cam]['res_width'] = res[0]
+            self.window_cam.cam_settings[cam]['res_height'] = res[1]
+
         # Spawn processes
         for cam in self.cams_to_open:
-            print(cam)
+            self.window_cam.cam_queue.put(self.window_cam.cam_settings[cam])
             self.processes[cam] = mp.Process(target=video.cam_record, args=(cam, self.window_cam.cam_queue, self.vid_name))
 
         # Start processes
-        print(self.processes)
         for p in self.processes:
-            self.processes[p].start() 
-            print("process %s started" % p)
+            self.processes[p].start()
+            print("Process %s started" % p)
 
     def terminate_cams(self):
-        self.window_cam.cam_queue.put(1)
         for p in self.processes:
             self.processes[p].terminate()
             self.processes[p].join()

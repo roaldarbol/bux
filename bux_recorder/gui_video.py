@@ -220,7 +220,6 @@ class CameraWindow():
         if self.preview_running == False: # otherwise it starts
             self.button_preview.config(text = self.labels["t_preview_stop"], bg="red")
             # self.button_start.config(state="disabled")
-            print("Caps: ", self.cap)
             i = [0] * len(self.cap)
 
             ### MP IMPLEMENTATION
@@ -237,7 +236,6 @@ class CameraWindow():
 
             # Spawn processes
             for cam in self.cams_to_open:
-                # self.cam_settings[cam]['resolution'] = self.dropdown_resolution[cam].get()
                 self.cam_queue.put(self.cam_settings[cam])
                 self.processes[cam] = mp.Process(target=video.cam_preview, args=(cam, self.cam_queue), kwargs={"resolution" : self.dropdown_resolution[cam].get()})
 

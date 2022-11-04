@@ -26,29 +26,9 @@ def cam_preview(cam, queue, **kwargs):
     # new_width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, cam_settings['res_height'])
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, cam_settings['res_width'])
-    cap.set(cv2.CAP_PROP_FPS, 9)
-    # if cam == 1:
-    #     ret['resolution'] = [new_height, new_width]
+    # cap.set(cv2.CAP_PROP_FPS, 9)
     queue.put(cam_settings)
-    # cap.set(cv2.CAP_PROP_BRIGHTNESS, 10)
-    # print(cap.get(cv2.CAP_PROP_FRAME_HEIGHT), cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    # print("hi")
-    # print(vid_height, vid_width)
-    # print(
-    #     cap.get(cv2.CAP_PROP_FRAME_WIDTH), 
-    #     cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    # )
-    # print(vid_width/2, vid_height/2)
-    # new_vid_height = [
-    #     int(vid_height/2 - vid_height/4),
-    #     int(vid_height/2 + vid_height/4)
-    # ]
-    # new_vid_width = [
-    #     int(vid_width/2 - vid_width/4),
-    #     int(vid_width/2 + vid_width/4)
-    # ]
-    # print(new_vid_height, new_vid_width)
-    # cap.set(cv2.CAP_PROP_EXPOSURE, -8.0)
+
     # Here we can maybe try to change settings in the loop
     set_res_attempt = 0
     while True:
@@ -78,19 +58,28 @@ def cam_preview(cam, queue, **kwargs):
         #     break
 
 def cam_record(cam, queue, filename):
+    cam_settings = queue.get()
+    vid_width = cam_settings['res_width']
+    vid_height = cam_settings['res_height']
     cap = cv2.VideoCapture(cam)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, cam_settings['res_height'])
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, cam_settings['res_width'])
+    queue.put(cam_settings)
+    
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    fps = 20.0
+    fps = 30.0
     filetype = "avi"
     filename = "{}-cam{}.{}".format(filename, cam, filetype)
-    vid_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH) + 0.5)
-    vid_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT) + 0.5)
+    # vid_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH) + 0.5)
+    # vid_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT) + 0.5)
     out = cv2.VideoWriter(filename, fourcc, fps, (vid_width, vid_height))
     # i = 0
     while True:
         ret, frame = cap.read() # Capture frame-by-frame
         if ret == True:
             # i += 1
-            out.write(frame)
-            cv2.imshow('Cam %d' % cam, frame)
+            grayFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            out.write(grayFrame)
+            cv2.imshow('Cam %d' % cam, grayFrame)
             cv2.waitKey(1)
+            
