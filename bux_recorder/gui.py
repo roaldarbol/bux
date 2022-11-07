@@ -27,10 +27,13 @@ import bux_recorder.logger as logger
 class bux_recorder():
     def __init__(self):
         self.labels = label_text.create_labels()
+        self.date = dt.datetime.now().strftime("%Y-%m-%d")
+        self.log_object = logger.Create_logger('debugger')
+        self.log_object.add_stream_handler()
         self.log = logging.getLogger('debugger')
-        self.cam_log = logging.getLogger('camera_log')
-        if utils.is_raspberrypi() == False:
-            self.log.info("You're not on a Raspberry Pi")
+        # self.cam_log = logging.getLogger('camera_log')
+        # if utils.is_raspberrypi() == False:
+        # self.log.info("You're not on a Raspberry Pi")
         self.running = False
         self.cam_opened = {}
         self.working_serial = self.labels["t_serial_choose"]
@@ -163,7 +166,8 @@ class bux_recorder():
         self.window_cam = gui_video.CameraWindow(
             labels=self.labels, 
             coordinates=self.gui_coordinates,
-            toplevel=self.root
+            toplevel=self.root,
+            parent=self
             )
     
     def create_window_serial(self):
@@ -179,10 +183,10 @@ class bux_recorder():
             # self.ser = serial_connection.serial_connection("usb")
             # self.ser.connect_device()
             self.start_dt = dt.datetime.now().strftime('%Y-%m-%d_%H.%M.%S')
-            if self.path != "":
-                self.vid_name = "{}/{}".format(self.path, self.start_dt)
-            else:
-                self.vid_name = self.start_dt
+            # if self.path != "":
+            #     self.vid_name = "{}/{}".format(self.path, self.start_dt)
+            # else:
+            #     self.vid_name = self.start_dt
             self.button_start.config(text = self.labels["t_stop"], bg="red")
             self.window_cam.button_preview.config(state="disabled")
             self.start_cams()
@@ -207,6 +211,7 @@ class bux_recorder():
         ### MP IMPLEMENTATION
         self.processes = {}
         self.cams_to_open = {k:v for k,v in enumerate(self.window_cam.cams_selected.values()) if v == True}
+        self.stop = mp.Event()
 
         # Add settings
         for cam in self.cams_to_open:
@@ -219,17 +224,31 @@ class bux_recorder():
         # Spawn processes
         for cam in self.cams_to_open:
             self.window_cam.cam_queue.put(self.window_cam.cam_settings[cam])
-            self.processes[cam] = mp.Process(target=video.cam_record, args=(cam, self.window_cam.cam_queue, self.vid_name))
+            self.processes[cam] = mp.Process(
+                target=video.cam_record, 
+                args=(
+                    cam, 
+                    self.window_cam.cam_queue, 
+                    self.path,
+                    self.start_dt,
+                    self.stop
+                    ),
+                kwargs={
+                    "resolution" : self.window_cam.dropdown_resolution[cam].get()
+                    }
+                )
 
         # Start processes
         for p in self.processes:
             self.processes[p].start()
-            print("Process %s started" % p)
+            self.log.info("Process %s started" % p)
 
     def terminate_cams(self):
+        self.stop.set()
         for p in self.processes:
-            self.processes[p].terminate()
+            self.window_cam.cam_settings[p] = self.window_cam.cam_queue.get()
             self.processes[p].join()
+        
         # cv2.destroyAllWindows() # Just needs any input, though it's not using it here...
         # self.button_start.config(state="normal")
     
@@ -294,6 +313,7 @@ class bux_recorder():
         self.path_short = (self.path[:cutoff] and '..') + self.path[cutoff:] 
         self.labels["t_dir_choose_current"] = self.labels["t_dir_choose"][1]
         self.button_dirname.config(text=self.labels["t_dir_choose_current"])
+        self.log_object.add_file_handler(self.path, self.date)
     
     def close(self):
         if messagebox.askokcancel("Quit", self.labels["t_quit"]):

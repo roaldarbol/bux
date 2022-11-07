@@ -2,18 +2,25 @@ import tkinter as tk
 from tkinter import ttk
 import multiprocessing as mp
 import threading
+import datetime as dt
 import logging
 import cv2
+import toml
 import bux_recorder.label_text
 import bux_recorder.utils as utils
 import bux_recorder.logger as logger
 import bux_recorder.video as video
 
 class CameraWindow():
-    def __init__(self, labels, coordinates, toplevel=None):
-        self.labels = labels
+    def __init__(self, labels, coordinates, toplevel=None, parent=None):
+        if parent is not None:
+            for key, val in vars(parent).items():
+                setattr(self, key, val)
+        else:
+            self.labels = labels
+            self.date = self.date = dt.datetime.now().strftime("%Y-%m-%d")
         self.log = logging.getLogger('debugger')
-        self.cam_log = logging.getLogger('camera_log')
+        
         if toplevel is None:
             self.window_camera = tk.Tk()
         else:
@@ -26,12 +33,19 @@ class CameraWindow():
         self.working_cams = [self.labels["t_cam_choose"]]
         self.preview_running = False
 
+        self.video_format = {
+            'avi': cv2.VideoWriter_fourcc(*'XVID'),
+            #'mp4': cv2.VideoWriter_fourcc(*'H264'),
+            'mp4': cv2.VideoWriter_fourcc(*'XVID'),
+        }
+
         self.default_cam_resolutions = [
             "640, 480",
             "800, 600", 
             "1280, 720",
             "1920, 1280"
         ]
+
         self.cam_resolution_pre = {}
         self.cam_resolutions = {}
         self.cam_settings = {}
@@ -173,7 +187,6 @@ class CameraWindow():
             cap.release()
             self.cam_settings[cam]['res_height'] = h
             self.cam_settings[cam]['res_width'] = w
-        print(self.cam_settings, "here")
             # self.cam_settings[cam]['res_width'] = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
             # w = self.cam_settings[cam]['res_width']
             # h = self.cam_settings[cam]['res_height']
@@ -195,7 +208,7 @@ class CameraWindow():
                 self.button_open_camera[cam].config(text=self.labels["t_cam_deselect"])
                 # self.cap[cam] = cv2.VideoCapture(cam)
                 self.log.info('Camera %s selected', cam)
-                print(self.cams_selected)
+                # print(self.cams_selected)
                 # for widget in self.widgets_cam_enable:
                 #     widget.configure(state='normal')
         elif self.cams_selected[cam]: 
@@ -235,13 +248,20 @@ class CameraWindow():
                 self.cam_settings[cam]['res_height'] = res[1]
 
             # Spawn processes
+            self.start_dt = dt.datetime.now().strftime('%Y-%m-%d_%H.%M.%S')
             for cam in self.cams_to_open:
                 self.cam_queue.put(self.cam_settings[cam])
-                self.processes[cam] = mp.Process(target=video.cam_preview, args=(cam, self.cam_queue), kwargs={"resolution" : self.dropdown_resolution[cam].get()})
+                self.processes[cam] = mp.Process(
+                    target=video.cam_preview, 
+                    args=(cam, self.cam_queue), 
+                    kwargs={
+                        "resolution" : self.dropdown_resolution[cam].get()
+                        })
 
             # Start processes
             for p in self.processes:
                 self.processes[p].start()    
+                self.log.info("Process %s started" % p)
         
         if self.preview_running == True: # if the experiment is running, it stops
             # ret = {'foo': False}
