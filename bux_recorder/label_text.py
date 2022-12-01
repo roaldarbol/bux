@@ -10,6 +10,8 @@ def create_labels():
     labels["t_cam_choose"] = "Choose camera"
     labels["t_cam_select"] = "Select camera"
     labels["t_cam_deselect"] = "Deselect camera"
+    labels["t_cam_activate"] = "Activate"
+    labels["t_cam_deactivate"] = "Deactivate"
     labels["t_serial_choose"] = "Choose serial"
     labels["t_serial"] = "Microcontrollers"
     labels["t_serial_open"] = "Open serial"
