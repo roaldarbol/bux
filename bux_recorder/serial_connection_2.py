@@ -1,10 +1,12 @@
 import time
+import select
 import serial
 import tkinter as tk
 from tkinter import ttk
+from mpremote import pyboard
 from serial.tools import list_ports
+
 from bux_recorder.label_text import create_labels
-from serial_mailman.mailman import MailMan
 
 class SerialWindow():
     def __init__(self, labels, coordinates, toplevel=None):
@@ -28,7 +30,8 @@ class SerialWindow():
         self.window_serial.title("Serial devices")
 
         # --- CREATE WIDGET DICTS --- #
-        self.ser = {}
+        self.pyb = {}
+        self.poll = {}
         self.serial_scripts_raw = {}
         self.serial_scripts_py = {}
         self.serial_opened = {}
@@ -39,6 +42,7 @@ class SerialWindow():
         self.text_command = {}
         self.button_send_serial = {}
         self.button_send_interrupt = {}
+        self.TERMINATOR = '\r'.encode('utf8')
 
         # --- CREATE WIDGETS FOR EACH SERIAL DEVICE --- #
         for ser in self.working_serial:
@@ -57,14 +61,14 @@ class SerialWindow():
             lambda_send_serial = lambda x = ser_n: (
                 self.send_serial(
                     x,
-                    self.ser[x],
+                    self.pyb[x],
                     self.dropdown_scripts[x].get(), 
                     self.text_command[x].get()
                     )
             )
             lambda_send_interrupt = lambda x = ser_n: (
                 self.send_interrupt(
-                    self.ser[x]
+                    self.pyb[x]
                     )
             )
 
@@ -123,8 +127,8 @@ class SerialWindow():
     def toggle_serial(self, serial):
         if not self.serial_opened[serial]:
                 device = self.working_serial[serial]
-                self.ser[serial] = MailMan(device)
-                self.serial_scripts_raw[serial] = self.get_scripts(self.ser[serial])
+                self.pyb[serial] = pyboard.Pyboard(device, 115200)
+                self.serial_scripts_raw[serial] = self.get_scripts(self.pyb[serial])
                 self.serial_scripts_py[serial] = self.serial_scripts_raw[serial].split("'")[1::2]
                 self.serial_scripts_py[serial].insert(0, self.labels["t_script_choose"])
                 self.serial_opened[serial] = True
@@ -139,12 +143,13 @@ class SerialWindow():
             self.serial_opened[serial] = False
             self.dropdown_serial[serial].config(state="readonly")
             self.button_open_serial[serial].config(text=self.labels["t_serial_open"])
-            self.ser[serial].close()
+            self.pyb[serial].exit_raw_repl()
+            self.pyb[serial].close()
             # for widget in self.widgets_serial:
             #         widget.configure(state='disable')
 
     def get_scripts(self, serial):
-        serial.send("os.listdir()")
+        self.send("import os; print(os.listdir())")
         return serial.receive()
 
     def send_serial(self, ser_n, serial, script, message):
@@ -158,17 +163,55 @@ class SerialWindow():
             self.button_send_serial[ser_n].config(text=self.labels["t_serial_send"])
         # print(message)
         serial.send(message)
-        # while self.serial_running[ser_n]:
-        #     print(serial.receive())
-        #     self.window_serial.update()
 
     def send_interrupt(self, serial):
         serial.send('\x03')
+
+    def poll(self, serial, ser_n):
+        self.poll[ser_n] = select.poll()
+        self.poll[ser_n].register(serial, select.POLLIN)
+
+    def log_for(device, secs):
+        global pyb
+        end = time.time() + secs
+        while time.time() < end:
+            events = poll.poll(1000)
+            for file in events:
+                if file[0] == pyb[device].serial.fileno():
+                    ch = pyb[device].serial.read(1)
+                    print(ch.decode('utf-8'), end='')
+
+
+# class MailMan():
+    
+
+    # def __init__(self, device, baud=115200, timeout=1):
+    #     self.serial = serial.Serial(device, baud, timeout=timeout)
+
+    # def receive(self, ser_n) -> str:
+    #     line = self.pyb[ser_n].read_until(self.TERMINATOR)
+    #     return line.decode('utf-8').strip()
+
+    # def send(self, ser_n, text: str) -> bool:
+    #     line = '%s\r\f' % text
+    #     self.pyb[ser_n].serial.write(line.encode('utf8'))
+    #     # the line should be echoed.
+    #     # If it isn't, something is wrong.
+    #     return text == self.receive()
+
+    # def write(self, string):
+    #     self.serial.write(string)
+
+    # def is_open(self):
+    #     print(self.serial.is_open)
+
+    # def close(self):
+    #     self.serial.close()
 
     def run(self):
         self.window_serial.mainloop()
 
 
-# labels = create_labels()
-# win = SerialWindow(labels, [200, 100, 100, 100])
-# win.run()
+labels = create_labels()
+win = SerialWindow(labels, [200, 100, 100, 100])
+win.run()

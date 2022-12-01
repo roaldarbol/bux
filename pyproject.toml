@@ -23,7 +23,7 @@ secondary = true
 [tool.poetry.dev-dependencies]
 jupyter = "^1.0.0"
 ipykernel = "^6.10.0"
-colorlog = "6.6.0"
+colorlog = "^6.6.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
