@@ -172,26 +172,15 @@ class bux_recorder:
         )
 
     def toggle_record(self):
-        """Toggles Preview Start/Stop state"""
-        if self.record_running == False:  # otherwise it starts
+        """Toggles recording Start/Stop state"""
+        self.window_cam.toggle_record()
 
-            # Add settings
-            for cam in self.window_cam.cams_to_open:
-                res = self.window_cam.dropdown_resolution[cam].get()
-                res = res.split(",")
-                res = [int(n) for n in res]
-                self.window_cam.cam_settings[cam]["res_width"] = res[0]
-                self.window_cam.cam_settings[cam]["res_height"] = res[1]
-                self.window_cam.cam_queue.put(self.window_cam.cam_settings[cam])
-            self.button_record.config(text=self.labels["t_stop"], bg="red")
-            self.window_cam.button_activate.config(state="disable")
-            self.event_record.set()
-
-        if self.record_running == True:  # if the experiment is running, it stops
-            self.event_record.clear()
+        if self.record_running == False: # otherwise it starts
+            self.window_cam.button_activate.config(state='disable')
+        
+        if self.record_running == True: # if the experiment is running, it stops
             self.button_record.config(text=self.labels["t_start"], bg="green")
-            self.window_cam.button_activate.config(state="normal")
-
+        
         self.record_running = not self.record_running
 
     def get_dir(self):

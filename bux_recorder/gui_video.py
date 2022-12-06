@@ -63,7 +63,8 @@ class CameraWindow():
         self.cam_settings = {}
         self.generic_settings = {
             "res_width": 800,
-            "res_height": 600
+            "res_height": 600,
+            "vid_interval": 360
         }
 
         self.update_cams()
@@ -101,6 +102,8 @@ class CameraWindow():
         self.dropdown_camera = {}
         self.button_open_camera = {}
         self.dropdown_resolution = {}
+        self.spinbox_hour = {}
+        self.spinbox_min = {}
         self.button_settingsname = {}
         self.button_loadsettings = {}
         self.settings_path = {}
@@ -138,6 +141,21 @@ class CameraWindow():
                 values=self.cam_resolutions[cam])
             ind = self.cam_resolutions[cam].index(self.cam_resolution_pre[cam])
             self.dropdown_resolution[cam].current(ind)
+            # self.spinbox_hour[cam] = tk.Spinbox(
+            #     self.window_camera,
+            #     from_ = 0,
+            #     to = 24,
+            #     justify=tk.CENTER,
+            #     width=15,
+            # )
+            self.spinbox_min[cam] = tk.Spinbox(
+                self.window_camera,
+                from_ = 0,
+                to = 24 * 60,
+                justify=tk.CENTER,
+                width=15,
+                textvariable=tk.DoubleVar(self.window_camera, 360)
+            )
             self.button_settingsname[cam] = tk.Button(
                 self.window_camera, 
                 text=self.labels["t_settings_choose"][0], 
@@ -153,7 +171,10 @@ class CameraWindow():
             self.button_open_camera[cam].grid(row=1, column=cam, sticky="e")
             self.button_settingsname[cam].grid(row=2, column=cam, sticky="e")
             self.button_loadsettings[cam].grid(row=3, column=cam, sticky="e")
-            self.dropdown_resolution[cam].grid_configure(row=4, column=cam, pady=(7,0), sticky="e")
+            self.dropdown_resolution[cam].grid_configure(row=4, column=cam, sticky="e")
+            # self.spinbox_hour[cam].grid(row=5, column=cam, sticky="e")
+            self.spinbox_min[cam].grid(row=6, column=cam, pady=(7,0), sticky="e")
+
 
             # Bindings
             lambda_settings_enter = lambda function, x = cam: utils.hover(
@@ -178,8 +199,8 @@ class CameraWindow():
             
         for widgets in self.window_camera.winfo_children():
             widgets.grid_configure(padx=self.pad)#, pady=(2))
-        self.button_activate.grid(row=5, column=0, pady=(20,5), columnspan=self.cam_n)
-        self.button_preview.grid(row=6, column=0, pady=(0,5), columnspan=self.cam_n)
+        self.button_activate.grid(row=7, column=0, pady=(20,5), columnspan=self.cam_n)
+        self.button_preview.grid(row=8, column=0, pady=(0,5), columnspan=self.cam_n)
 
         if self.parent == None:
             self.button_record = tk.Button(
@@ -189,7 +210,7 @@ class CameraWindow():
                 width=15,
                 command = self.toggle_record
                 )
-            self.button_record.grid(row=7, column=0, pady=(0,5), columnspan=self.cam_n)
+            self.button_record.grid(row=9, column=0, pady=(0,5), columnspan=self.cam_n)
 
         
 
@@ -325,7 +346,8 @@ class CameraWindow():
         
         if self.preview_running == True: # if the experiment is running, it stops
             for cam in self.cams_to_open:
-                self.cam_settings[cam] = self.cam_queue.get()
+                temp_settings = self.cam_queue.get()
+                self.cam_settings[cam] = temp_settings[cam]
             self.event_preview.clear()
             self.button_preview.config(text=self.labels["t_preview"], bg="green")
             self.button_activate.config(state='normal')
@@ -344,6 +366,7 @@ class CameraWindow():
                 res = [int(n) for n in res]
                 self.cam_settings[cam]['res_width'] = res[0]
                 self.cam_settings[cam]['res_height'] = res[1]
+                self.cam_settings[cam]['vid_interval'] = int(self.spinbox_min[cam].get())
                 self.cam_queue.put(self.cam_settings)
 
             # Set buttons
@@ -352,6 +375,9 @@ class CameraWindow():
             self.event_record.set()
         
         if self.record_running == True: # if the experiment is running, it stops
+            for cam in self.cams_to_open:
+                temp_settings = self.cam_queue.get()
+                self.cam_settings[cam] = temp_settings[cam]
             self.event_record.clear()
             self.button_record.config(text=self.labels["t_start"], bg="green")
             self.button_activate.config(state='normal')

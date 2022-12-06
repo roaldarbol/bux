@@ -21,7 +21,8 @@ class BuxCamera():
         self.fourcc = cv2.VideoWriter_fourcc(*'mp4v') # .avi with 'XVID'
         self.fps = 30
         self.filetype = "mp4" #"avi" 
-        self.filename = "{}/{}-Cam-{}.{}".format(self.path, self.start_dt, self.cam, self.filetype)
+        self.vid_num = 0
+        self.filename = "{}/{}-cam{}-vid{}.{}".format(self.path, self.start_dt, self.cam, self.vid_num, self.filetype)
 
         # Begin event loop
         self.run()
@@ -66,26 +67,34 @@ class BuxCamera():
                 break
 
     def record(self, **kwargs):
-        
+        """Recording loop"""
+        # Set logger
+        self.set_logger()
+
         # Set video settings
         self.cam_settings = self.queue.get()
-        self.vid_width = self.cam_settings['res_width']
-        self.vid_height = self.cam_settings['res_height']
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.cam_settings['res_width'])
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.cam_settings['res_height'])
+        self.vid_width = self.cam_settings[self.cam]['res_width']
+        self.vid_height = self.cam_settings[self.cam]['res_height']
+        self.vid_interval = self.cam_settings[self.cam]['vid_interval']
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.cam_settings[self.cam]['res_width'])
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.cam_settings[self.cam]['res_height'])
         self.vid_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.vid_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.queue.put(self.cam_settings)
+        self.log.info("Settings:", self.cam_settings)
 
-        # Set logger
-        self.set_logger()
+        # Create output file
         self.out = cv2.VideoWriter(
             self.filename, 
             self.fourcc, 
             self.fps, 
             (self.vid_width, self.vid_height)
             )
+
         i = 0
+        t0 = time.time()
+        print("Beginning recording")
+
         while True:
             ret, frame = self.cap.read() # Capture frame-by-frame
             if ret == True:
@@ -94,8 +103,26 @@ class BuxCamera():
                 self.out.write(frame)
                 # cv2.imshow('Cam %d' % self.cam, frame)
                 cv2.waitKey(1)
-                self.log.debug("Frame %s", i)
-            
+                self.log.info("Frame %s", i)
+
+            # Check time (in minutes) - start new video
+            t1 = time.time()
+            t_diff = (t1 - t0) / 60
+            if t_diff >= self.vid_interval:
+                self.out.release()
+                cv2.waitKey(1)
+                self.vid_num += 1
+                self.filename = "{}/{}-cam{}-vid{}.{}".format(self.path, self.start_dt, self.cam, self.vid_num, self.filetype)
+                print("Starting new recording")
+                self.out = cv2.VideoWriter(
+                    self.filename, 
+                    self.fourcc, 
+                    self.fps, 
+                    (self.vid_width, self.vid_height)
+                    )
+                i = 0
+                t0 = time.time()
+
             # Check queue
             if not self.event_record.is_set():
                 self.out.release()
@@ -113,10 +140,11 @@ class BuxCamera():
 
 
 if __name__ == '__main__':
-    cam = 1
+    cam = 0
     queue = mp.Queue()
     path = '/Users/roaldarbol/Desktop'
     start_dt = dt.datetime.now().strftime('%Y-%m-%d_%H.%M.%S')
+    vid_interval_time = 5
     cam_settings = {}
     cam_settings['res_width'] = 800
     cam_settings['res_height'] = 600
@@ -143,6 +171,6 @@ if __name__ == '__main__':
     # Start processes
     process.start()
     event_record.set()
-    time.sleep(5)
+    time.sleep(3)
     event_stop.set()
     process.join()
