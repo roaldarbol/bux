@@ -8,12 +8,10 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-pyserial = "^3.5"
 opencv-python = "^4.5.5"
 PyYAML = "^6.0"
 toml = "^0.10.2"
-mpremote = "^0.2.0"
-serial-mailman = "*"
+belay = "^0.15.1"
 
 [[tool.poetry.source]]
 name = "testpypisimple"
