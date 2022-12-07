@@ -8,20 +8,26 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-opencv-python = "^4.5.5"
 PyYAML = "^6.0"
 toml = "^0.10.2"
 belay = "^0.15.1"
+opencv-python = { version = "^4.5.5", optional = true }
+#libcamera = { version = "*", optional = true }
+picamera2 = { version = "^0.3.7", optional = true }
 
 [[tool.poetry.source]]
-name = "testpypisimple"
-url = "https://test.pypi.org/simple/"
-secondary = true
+name = "piwheels"
+url = "https://www.piwheels.org/simple/"
+default = false
 
 [tool.poetry.dev-dependencies]
 jupyter = "^1.0.0"
 ipykernel = "^6.10.0"
 colorlog = "^6.6.0"
+
+[tool.poetry.extras]
+cv = ["opencv-python"]
+pi = ["picamera2"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

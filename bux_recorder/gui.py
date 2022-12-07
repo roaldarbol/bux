@@ -175,12 +175,12 @@ class bux_recorder:
         """Toggles recording Start/Stop state"""
         self.window_cam.toggle_record()
 
-        if self.record_running == False: # otherwise it starts
-            self.window_cam.button_activate.config(state='disable')
-        
-        if self.record_running == True: # if the experiment is running, it stops
+        if self.record_running == False:  # otherwise it starts
+            self.window_cam.button_activate.config(state="disable")
+
+        if self.record_running == True:  # if the experiment is running, it stops
             self.button_record.config(text=self.labels["t_start"], bg="green")
-        
+
         self.record_running = not self.record_running
 
     def get_dir(self):

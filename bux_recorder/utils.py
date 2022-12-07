@@ -11,40 +11,46 @@ from serial.tools import list_ports
 # From https://raspberrypi.stackexchange.com/a/118473
 def is_raspberrypi():
     try:
-        with io.open('/sys/firmware/devicetree/base/model', 'r') as m:
-            if 'raspberry pi' in m.read().lower(): 
-                return(m)
-    except Exception: 
+        with io.open("/sys/firmware/devicetree/base/model", "r") as m:
+            if "raspberry pi" in m.read().lower():
+                return m
+    except Exception:
         pass
     return False
+
 
 def get_platform():
     return platform.system()
 
+
 def get_gui_coordinates(root, w, h):
     # get screen width and height
-    ws = root.winfo_screenwidth() # width of the screen
-    hs = root.winfo_screenheight() # height of the screen
+    ws = root.winfo_screenwidth()  # width of the screen
+    hs = root.winfo_screenheight()  # height of the screen
 
     # calculate x and y coordinates for the Tk root window
-    x = (ws/2) - (w/2)
-    y = (hs/2) - (h/2)
-    return(w,h,x,y)
+    x = (ws / 2) - (w / 2)
+    y = (hs / 2) - (h / 2)
+    return (w, h, x, y)
+
 
 def handle_focus_in(button):
     full_name_entry.delete(0, tk.END)
-    full_name_entry.config(fg='black')
+    full_name_entry.config(fg="black")
+
 
 def handle_focus_out(button):
     full_name_entry.delete(0, tk.END)
-    full_name_entry.config(fg='grey')
+    full_name_entry.config(fg="grey")
     full_name_entry.insert(0, "Example: Joe Bloggs")
+
 
 def hover(button, enter, message):
     if message == "":
         return
     else:
         button.configure(text=message)
+
 
 def list_ports():
     """
@@ -54,7 +60,9 @@ def list_ports():
     dev_port = 0
     working_ports = []
     available_ports = []
-    while len(non_working_ports) < 6: # if there are more than 5 non working ports stop the testing. 
+    while (
+        len(non_working_ports) < 6
+    ):  # if there are more than 5 non working ports stop the testing.
         camera = cv2.VideoCapture(dev_port)
         if not camera.isOpened():
             non_working_ports.append(dev_port)
@@ -69,5 +77,5 @@ def list_ports():
             else:
                 # print("Port %s for camera ( %s x %s) is present but does not reads." %(dev_port,h,w))
                 available_ports.append(dev_port)
-        dev_port +=1
-    return available_ports,working_ports,non_working_ports
+        dev_port += 1
+    return available_ports, working_ports, non_working_ports
