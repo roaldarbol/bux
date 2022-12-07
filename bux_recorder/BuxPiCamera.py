@@ -172,7 +172,7 @@ if __name__ == "__main__":
 
     # Spawn processes
     process = mp.Process(
-        target=BuxCamera,
+        target=BuxPiCamera,
         args=[cam, queue, path, start_dt, event_stop, event_preview, event_record],
     )
 
