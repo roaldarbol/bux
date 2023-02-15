@@ -4,7 +4,8 @@ import belay
 import tkinter as tk
 from tkinter import ttk
 
-from bux_recorder.label_text import create_labels
+from bux_recorder.frontend.label_text import create_labels
+import bux_recorder.backend.utils as utils
 
 
 class SerialWindow:
@@ -117,8 +118,8 @@ class SerialWindow:
 
     def update_serial(self):
         self.working_serial = []
-        for port in list(list_ports.comports()):
-            self.working_serial.append(port.device)
+        # for port in list(list_ports.comports()):
+        #     self.working_serial.append(port.device)
         self.working_serial_original = self.working_serial.copy()
         # self.working_serial.insert(0, self.labels["t_serial_choose"])
         # self.dropdown_serial.config(values=self.working_serial)

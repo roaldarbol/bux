@@ -8,20 +8,19 @@ from tkinter import messagebox
 import tkinter.font as font
 import toml
 import cv2
-import asyncio
 import logging
 import multiprocessing as mp
 import belay
 
 # From the bux package
-import label_text as label_text
-import utils as utils
-import gui_video as gui_video
-import serial_connection as serial_connection
-import logger as logger
+import bux_recorder.backend.logger as logger
+import bux_recorder.backend.utils as utils
+import bux_recorder.frontend.ui_cameras as ui_cameras
+import bux_recorder.frontend.ui_micropython as ui_micropython
+import bux_recorder.frontend.label_text as label_text
 
 # Functions
-class bux_recorder:
+class BuxRecorder:
     def __init__(self):
         self.labels = label_text.create_labels()
         self.date = dt.datetime.now().strftime("%Y-%m-%d")
@@ -45,7 +44,7 @@ class bux_recorder:
     def GUI(self):
         """Create the main UI window"""
         self.root = tk.Tk()
-        self.logo = tk.PhotoImage(file="bux_recorder/locust.png")
+        self.logo = tk.PhotoImage(file="bux-logo.png")
         self.logo = self.logo.zoom(8)
         self.logo = self.logo.subsample(18)
         self.root.title("Bux Recorder")
@@ -159,28 +158,28 @@ class bux_recorder:
         )
 
     def create_window_cam(self):
-        self.window_cam = gui_video.CameraWindow(
+        self.window_cam = ui_cameras.CameraWindow(
             labels=self.labels,
             coordinates=self.gui_coordinates,
             toplevel=self.root,
             parent=self,
         )
 
-    def create_window_serial(self):
-        self.window_serial = serial_connection.SerialWindow(
-            labels=self.labels, coordinates=self.gui_coordinates, toplevel=self.root
-        )
+    # def create_window_serial(self):
+    #     self.window_serial = ui_micropython.SerialWindow(
+    #         labels=self.labels, coordinates=self.gui_coordinates, toplevel=self.root
+    #     )
 
     def toggle_record(self):
         """Toggles recording Start/Stop state"""
         self.window_cam.toggle_record()
 
-        if self.record_running == False: # otherwise it starts
-            self.window_cam.button_activate.config(state='disable')
-        
-        if self.record_running == True: # if the experiment is running, it stops
+        if self.record_running == False:  # otherwise it starts
+            self.window_cam.button_activate.config(state="disable")
+
+        if self.record_running == True:  # if the experiment is running, it stops
             self.button_record.config(text=self.labels["t_start"], bg="green")
-        
+
         self.record_running = not self.record_running
 
     def get_dir(self):
@@ -216,5 +215,5 @@ class bux_recorder:
 
 
 if __name__ == "__main__":
-    app = bux_recorder()
+    app = BuxRecorder()
     app.run()

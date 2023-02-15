@@ -3,6 +3,7 @@
 *.log
 *.avi
 *__pycache__
+.vscode
 dist/
 data/
 python/

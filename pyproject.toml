@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bux-recorder"
-version = "0.1.0"
+version = "1.0.0"
 description = ""
 authors = ["Mikkel Roald-Arbøl <github.ggb9a@simplelogin.co>"]
 license = "MIT"
@@ -12,11 +12,6 @@ opencv-python = "^4.5.5"
 PyYAML = "^6.0"
 toml = "^0.10.2"
 belay = "^0.15.1"
-
-[[tool.poetry.source]]
-name = "testpypisimple"
-url = "https://test.pypi.org/simple/"
-secondary = true
 
 [tool.poetry.dev-dependencies]
 jupyter = "^1.0.0"

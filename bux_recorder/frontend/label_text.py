@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+
 def create_labels():
     labels = defaultdict(list)
 
@@ -21,7 +22,10 @@ def create_labels():
     labels["t_script_choose"] = "Choose script"
     labels["t_cam_resolution"] = "Choose resolution"
     labels["t_settings_choose"] = ["Select settings", "Settings selected"]
-    labels["t_settings_choose_current"] = [ labels["t_settings_choose"][0], labels["t_settings_choose"][0] ]
+    labels["t_settings_choose_current"] = [
+        labels["t_settings_choose"][0],
+        labels["t_settings_choose"][0],
+    ]
     labels["t_settings_load"] = "Load settings"
     labels["t_preview"] = "Preview"
     labels["t_preview_stop"] = "Stop preview"
@@ -29,4 +33,4 @@ def create_labels():
     labels["t_stop"] = "Stop recording"
     labels["t_quit"] = "Do you want to quit Bux?"
 
-    return(labels)
+    return labels
