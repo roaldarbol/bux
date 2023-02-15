@@ -20,6 +20,7 @@ import bux_recorder.backend.utils as utils
 import bux_recorder.frontend.ui_cameras as ui_cameras
 
 # import bux_recorder.frontend.ui_micropython as ui_micropython
+import bux_recorder.frontend.ui_menubar as ui_menubar
 import bux_recorder.frontend.label_text as label_text
 import bux_recorder.frontend.ui_test_tab as ui_test
 

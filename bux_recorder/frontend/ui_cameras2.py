@@ -16,10 +16,14 @@ import bux_recorder.backend.process_camera as process_camera
 
 
 class CameraTab(ttk.Frame):
-    def __init__(self, labels, parent, *args, **kwargs):
-        ttk.Frame.__init__(self, parent, *args, **kwargs)
+    def __init__(self, parent, toplevel, *args, **kwargs):
+        ttk.Frame.__init__(self, toplevel, *args, **kwargs)
         self.parent = parent
+        if self.parent is not None:
+            for key, val in vars(self.parent).items():
+                setattr(self, key, val)
         if self.parent == None:
+            print("hi")
             self.path = "/Users/roaldarbol/Desktop"
             self.event_stop = mp.Event()
             self.event_preview = mp.Event()
@@ -32,7 +36,7 @@ class CameraTab(ttk.Frame):
         #     self.date = self.date = dt.datetime.now().strftime("%Y-%m-%d")
         self.log = logging.getLogger("debugger")
         self.date = self.date = dt.datetime.now().strftime("%Y-%m-%d")
-        self.labels = labels
+        # self.labels = labels
         self.window_camera = ttk.LabelFrame(self)
         self.window_camera.grid()
         # if toplevel is None:
