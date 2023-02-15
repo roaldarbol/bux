@@ -6,19 +6,22 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 import tkinter.font as font
-from PIL import Image, ImageTk
 import toml
 import cv2
 import logging
-import multiprocessing as mp
 import belay
+import multiprocessing as mp
+from multiprocessing import freeze_support
+
 
 # From the bux package
 import bux_recorder.backend.logger as logger
 import bux_recorder.backend.utils as utils
 import bux_recorder.frontend.ui_cameras as ui_cameras
-import bux_recorder.frontend.ui_micropython as ui_micropython
+
+# import bux_recorder.frontend.ui_micropython as ui_micropython
 import bux_recorder.frontend.label_text as label_text
+import bux_recorder.frontend.ui_test_tab as ui_test
 
 # Functions
 class BuxRecorder:
@@ -45,11 +48,20 @@ class BuxRecorder:
     def GUI(self):
         """Create the main UI window"""
         self.root = tk.Tk()
-        self.logo = tk.PhotoImage(file="bux_recorder/buxlogo.png")
+        self.logo = tk.PhotoImage(file="bux_recorder/frontend/resources/bux_logo.png")
         self.logo = self.logo.zoom(8)
         self.logo = self.logo.subsample(18)
         self.root.title("Bux Recorder")
         self.root.call("wm", "iconphoto", self.root._w, self.logo)
+
+        # Tabs
+        self.nb = ttk.Notebook(self.root)
+        self.page1 = ui_test.Typ14(self.nb)
+        # self.page1 = ttk.Frame(self.nb, width= 300, height = 200)
+        self.page2 = ttk.Frame(self.nb, width=300, height=200)
+
+        self.nb.add(self.page1, text="One")
+        self.nb.add(self.page2, text="Two")
 
         # To get button height and width in pixels: https://stackoverflow.com/a/46286221/13240268
         self.colwidth = 180
@@ -61,7 +73,7 @@ class BuxRecorder:
             map(lambda x, y: x + y, self.gui_coordinates, shift)
         )
         self.root.geometry("%dx%d+%d+%d" % self.gui_coordinates)
-        self.root.resizable(0, 0)
+        # self.root.resizable(0, 0)
         # self.root.bind("<space>", self.toggle_record) # Removed space access to Start Experiment
         self.root.protocol("WM_DELETE_WINDOW", self.close)
         # self.root.columnconfigure(0, minsize=self.col_width)
@@ -217,5 +229,6 @@ class BuxRecorder:
 
 
 if __name__ == "__main__":
+    freeze_support()
     app = BuxRecorder()
     app.run()
