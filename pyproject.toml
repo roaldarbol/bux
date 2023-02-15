@@ -1,24 +1,22 @@
 [tool.poetry]
 name = "bux-recorder"
-version = "0.1.0"
+version = "2.0.0"
 description = ""
 authors = ["Mikkel Roald-Arbøl <github.ggb9a@simplelogin.co>"]
 license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.9,<3.9.7 || >3.9.7,<3.12"
 opencv-python = "^4.5.5"
 PyYAML = "^6.0"
 toml = "^0.10.2"
 belay = "^0.15.1"
+pyside6 = "^6.4.2"
+pyqt6-tools = "^6.1.0.3.2"
 
-[[tool.poetry.source]]
-name = "testpypisimple"
-url = "https://test.pypi.org/simple/"
-secondary = true
-
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.0.4"
 jupyter = "^1.0.0"
 ipykernel = "^6.10.0"
 colorlog = "^6.6.0"

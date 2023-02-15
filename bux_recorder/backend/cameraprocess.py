@@ -4,25 +4,41 @@ import utils
 import time
 import logging
 import datetime as dt
-import bux_recorder.logger as logger 
+import bux_recorder.logger as logger
+from bux_recorder.utils import list_ports
 
-class BuxCamera():
-    def __init__(self, cam, queue, path, start_dt, event_stop, event_preview, event_record, parent=None, **kwargs):
+
+class CameraProcess:
+    def __init__(
+        self,
+        cam,
+        queue,
+        path,
+        start_dt,
+        event_stop,
+        event_preview,
+        event_record,
+        parent=None,
+        **kwargs,
+    ):
         self.cam = cam
         self.queue = queue
         self.path = path
         self.start_dt = start_dt
         self.event_stop = event_stop
         self.event_preview = event_preview
-        self.event_record = event_record        
+        self.event_record = event_record
         self.cap = cv2.VideoCapture(self.cam)
+        print(self.cap)
 
         # VideoWriter
-        self.fourcc = cv2.VideoWriter_fourcc(*'mp4v') # .avi with 'XVID'
+        self.fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # .avi with 'XVID'
         self.fps = 30
-        self.filetype = "mp4" #"avi" 
+        self.filetype = "mp4"  # "avi"
         self.vid_num = 0
-        self.filename = "{}/{}-cam{}-vid{}.{}".format(self.path, self.start_dt, self.cam, self.vid_num, self.filetype)
+        self.filename = "{}/{}-cam{}-vid{}.{}".format(
+            self.path, self.start_dt, self.cam, self.vid_num, self.filetype
+        )
 
         # Begin event loop
         self.run()
@@ -37,26 +53,27 @@ class BuxCamera():
                 self.cap.release()
                 break
 
-
     def preview(self, **kwargs):
 
         # Set video settings
         self.cam_settings = self.queue.get()
-        self.vid_width = self.cam_settings[self.cam]['res_width']
-        self.vid_height = self.cam_settings[self.cam]['res_height']
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.cam_settings[self.cam]['res_width'])
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.cam_settings[self.cam]['res_height'])
+        self.vid_width = self.cam_settings[self.cam]["res_width"]
+        self.vid_height = self.cam_settings[self.cam]["res_height"]
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.cam_settings[self.cam]["res_width"])
+        self.cap.set(
+            cv2.CAP_PROP_FRAME_HEIGHT, self.cam_settings[self.cam]["res_height"]
+        )
         self.vid_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.vid_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.queue.put(self.cam_settings)
 
         # Preview loop
         while True:
-            ret, frame = self.cap.read() # Capture frame-by-frame
+            ret, frame = self.cap.read()  # Capture frame-by-frame
             if ret == True:
                 # If something new happens in settings, change accordingly
                 grayFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                cv2.imshow('Cam %d' % self.cam, grayFrame)
+                cv2.imshow("Cam %d" % self.cam, grayFrame)
                 cv2.waitKey(1)
 
             # Check event
@@ -73,11 +90,13 @@ class BuxCamera():
 
         # Set video settings
         self.cam_settings = self.queue.get()
-        self.vid_width = self.cam_settings[self.cam]['res_width']
-        self.vid_height = self.cam_settings[self.cam]['res_height']
-        self.vid_interval = self.cam_settings[self.cam]['vid_interval']
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.cam_settings[self.cam]['res_width'])
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.cam_settings[self.cam]['res_height'])
+        self.vid_width = self.cam_settings[self.cam]["res_width"]
+        self.vid_height = self.cam_settings[self.cam]["res_height"]
+        self.vid_interval = self.cam_settings[self.cam]["vid_interval"]
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.cam_settings[self.cam]["res_width"])
+        self.cap.set(
+            cv2.CAP_PROP_FRAME_HEIGHT, self.cam_settings[self.cam]["res_height"]
+        )
         self.vid_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.vid_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.queue.put(self.cam_settings)
@@ -85,18 +104,15 @@ class BuxCamera():
 
         # Create output file
         self.out = cv2.VideoWriter(
-            self.filename, 
-            self.fourcc, 
-            self.fps, 
-            (self.vid_width, self.vid_height)
-            )
+            self.filename, self.fourcc, self.fps, (self.vid_width, self.vid_height)
+        )
 
         i = 0
         t0 = time.time()
         print("Beginning recording")
 
         while True:
-            ret, frame = self.cap.read() # Capture frame-by-frame
+            ret, frame = self.cap.read()  # Capture frame-by-frame
             if ret == True:
                 i += 1
                 grayFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -112,14 +128,16 @@ class BuxCamera():
                 self.out.release()
                 cv2.waitKey(1)
                 self.vid_num += 1
-                self.filename = "{}/{}-cam{}-vid{}.{}".format(self.path, self.start_dt, self.cam, self.vid_num, self.filetype)
+                self.filename = "{}/{}-cam{}-vid{}.{}".format(
+                    self.path, self.start_dt, self.cam, self.vid_num, self.filetype
+                )
                 print("Starting new recording")
                 self.out = cv2.VideoWriter(
-                    self.filename, 
-                    self.fourcc, 
-                    self.fps, 
-                    (self.vid_width, self.vid_height)
-                    )
+                    self.filename,
+                    self.fourcc,
+                    self.fps,
+                    (self.vid_width, self.vid_height),
+                )
                 i = 0
                 t0 = time.time()
 
@@ -132,22 +150,25 @@ class BuxCamera():
                 break
 
     def set_logger(self):
-        
+
         # Set logger
-        log_object = logger.Create_logger(f'Cam-{self.cam}')
+        log_object = logger.Create_logger(f"Cam-{self.cam}")
         log_object.add_file_handler(self.path, self.start_dt)
-        self.log = logging.getLogger(f'Cam-{self.cam}')
+        self.log = logging.getLogger(f"Cam-{self.cam}")
 
 
-if __name__ == '__main__':
-    cam = 0
+if __name__ == "__main__":
+    [available_cams, working_cams, non_working_cams] = list_ports()
+    print(working_cams)
+    cams = working_cams
+    generic_settings = {"res_width": 800, "res_height": 600, "vid_interval": 360}
     queue = mp.Queue()
-    path = '/Users/roaldarbol/Desktop'
-    start_dt = dt.datetime.now().strftime('%Y-%m-%d_%H.%M.%S')
+    path = "/Users/roaldarbol/Desktop"
+    start_dt = dt.datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
     vid_interval_time = 5
     cam_settings = {}
-    cam_settings['res_width'] = 800
-    cam_settings['res_height'] = 600
+    for cam in cams:
+        cam_settings[cam] = generic_settings
     event_stop = mp.Event()
     event_preview = mp.Event()
     event_record = mp.Event()
@@ -155,22 +176,19 @@ if __name__ == '__main__':
     queue.put(cam_settings)
 
     # Spawn processes
-    process = mp.Process(
-        target=BuxCamera,
-        args=[
-            cam, 
-            queue, 
-            path, 
-            start_dt,
-            event_stop, 
-            event_preview, 
-            event_record
-            ]
+    processes = {}
+
+    for cam in cams:
+        processes[cam] = mp.Process(
+            target=CameraProcess,
+            args=[cam, queue, path, start_dt, event_stop, event_preview, event_record],
         )
 
     # Start processes
-    process.start()
-    event_record.set()
+    for p in processes:
+        processes[p].start()
+    event_preview.set()
     time.sleep(3)
     event_stop.set()
-    process.join()
+    for p in processes:
+        processes[p].join()

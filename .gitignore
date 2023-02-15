@@ -1,8 +1,8 @@
-.DS_Store
+*.DS_Store
 *.csv
 *.log
 *.avi
-bux_recorder/__pycache__
+*__pycache__
 dist/
 data/
 python/
