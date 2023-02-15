@@ -6,6 +6,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 import tkinter.font as font
+from PIL import Image, ImageTk
 import toml
 import cv2
 import logging
@@ -44,7 +45,7 @@ class BuxRecorder:
     def GUI(self):
         """Create the main UI window"""
         self.root = tk.Tk()
-        self.logo = tk.PhotoImage(file="bux-logo.png")
+        self.logo = tk.PhotoImage(file="bux_recorder/buxlogo.png")
         self.logo = self.logo.zoom(8)
         self.logo = self.logo.subsample(18)
         self.root.title("Bux Recorder")
@@ -165,10 +166,11 @@ class BuxRecorder:
             parent=self,
         )
 
-    # def create_window_serial(self):
-    #     self.window_serial = ui_micropython.SerialWindow(
-    #         labels=self.labels, coordinates=self.gui_coordinates, toplevel=self.root
-    #     )
+    def create_window_serial(self):
+        return 1
+        # self.window_serial = ui_micropython.SerialWindow(
+        #     labels=self.labels, coordinates=self.gui_coordinates, toplevel=self.root
+        # )
 
     def toggle_record(self):
         """Toggles recording Start/Stop state"""
