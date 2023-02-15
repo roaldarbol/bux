@@ -1,8 +1,7 @@
 # # This Python file uses the following encoding: utf-8
 import sys
 from PySide6.QtWidgets import QApplication, QMainWindow
-from PySide6.QtCore import QFile
-from frontend.form import Ui_Bux
+from frontend.main_ui import Ui_Bux
 
 
 class MainWindow(QMainWindow):
