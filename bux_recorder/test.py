@@ -53,12 +53,14 @@ class BuxRecorder(ttk.Frame):
         self.notebook = ttk.Notebook(self.root)
 
         # Create tabs
+        self.frame_welcome = ttk.Frame()
         self.frame_setup = SetupTab(parent=self.notebook)
         self.frame_cameras = CameraTab(parent=self, toplevel=self.notebook)
         # self.frame_micropython = MicropythonTab(parent=self.notebook)
         # self.frame_experiment = ExperimentTab(parent=self.notebook)
 
         # Add frames to notebook
+        self.notebook.add(self.frame_welcome, text="Welcome")
         self.notebook.add(self.frame_setup, text="Setup")
         self.notebook.add(self.frame_cameras, text="Cameras")
 
