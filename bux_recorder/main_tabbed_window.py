@@ -32,6 +32,7 @@ class BuxRecorder(ttk.Frame):
         self.logo = tk.PhotoImage(file="bux_recorder/frontend/resources/bux_logo.png")
         self.logo = self.logo.zoom(8)
         self.logo = self.logo.subsample(18)
+        # self.root.wm_iconbitmap('myicon.ico')
         self.root.title("Bux Recorder")
         self.root.call("wm", "iconphoto", self.root._w, self.logo)
         self.create_menubar()
