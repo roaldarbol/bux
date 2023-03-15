@@ -11,12 +11,13 @@ python = "^3.9"
 opencv-python = "^4.5.5"
 PyYAML = "^6.0"
 toml = "^0.10.2"
-belay = "^0.15.1"
+belay = "^0.19"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 jupyter = "^1.0.0"
 ipykernel = "^6.10.0"
 colorlog = "^6.6.0"
+nuitka = "^1.5.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
